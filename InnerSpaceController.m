@@ -119,7 +119,7 @@ extern void makeWindowOmniPresent(int windowNumber);
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
 {
   // The saver is *always* running...
-  [self doSaverInBackground: self];
+  // [self doSaverInBackground: self];
 }
 
 - (void) createSaverWindow: (BOOL)desktop

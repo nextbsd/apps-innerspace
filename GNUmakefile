@@ -35,7 +35,9 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpaceInfo.plist \
 Black.bproj/Black.InnerSpace \
-Boxes.bproj/Boxes.InnerSpace
+Boxes.bproj/Boxes.InnerSpace \
+Polyhedra.bproj/Polyhedra.InnerSpace \
+ItJustStopped.bproj/ItJustStopped.InnerSpace
 
 #
 # Header files
@@ -58,13 +60,13 @@ InnerSpaceController.m
 # C files
 #
 
-InnerSpace_C_FILES= 
+InnerSpace_C_FILES= UtilFunctions.c
 
 #
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj
+SUBPROJECTS = Black.bproj Boxes.bproj ItJustStopped.bproj Polyhedra.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

@@ -112,7 +112,7 @@
 - (void) createSaverWindow: (BOOL)desktop
 {
   NSRect frame = [[NSScreen mainScreen] frame];
-  int store = NSBackingStoreNonretained;
+  int store = NSBackingStoreRetained;
 
   // dertermine backing type...
   NS_DURING
@@ -290,6 +290,8 @@
 	    [moduleView inspectorInstalled];
 	  }
       }
+    [self createSaverWindow: YES];
+    [self startTimer];
   NS_HANDLER
 
   NS_ENDHANDLER
@@ -302,6 +304,7 @@
       {
 	[moduleView inspectorWillBeRemoved];
       }
+    [self stopSaver];
   NS_HANDLER
     NSLog(@"EXCEPTION while in _stopModule: %@",localException);
   NS_ENDHANDLER

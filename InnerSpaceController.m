@@ -7,6 +7,9 @@
 
 #define TIME 0.07
 
+// forward declaration
+extern void makeWindowOmniPresent(int windowNumber);
+
 @implementation InnerSpaceController
 
 // interface callbacks
@@ -115,16 +118,9 @@
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
 {
-  // The saver is *always running...
+  // The saver is *always* running...
   [self doSaverInBackground: self];
 }
-
-#ifdef GNUSTEP
-- (void) _makeSaverWindowOmniPresent
-{
-  NSDebugLog(@"Make Window Omnipresent...");
-}
-#endif
 
 - (void) createSaverWindow: (BOOL)desktop
 {
@@ -171,7 +167,7 @@
     {
       [saverWindow setLevel: NSDesktopWindowLevel];
 #ifdef GNUSTEP
-      [self _makeSaverWindowOmniPresent];
+      makeWindowOmniPresent([saverWindow windowNumber]);
 #endif
     } 
   else

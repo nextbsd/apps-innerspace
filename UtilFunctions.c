@@ -1,5 +1,18 @@
 #include <stdlib.h>
 
+#ifdef GNUSTEP
+#define BOOL XWINDOWSBOOL	// prevent X windows BOOL
+#include <X11/Xlib.h>		// warning
+#undef BOOL
+#endif
+
+void makeWindowOmniPresent(int windowNumber)
+{
+#ifdef GNUSTEP
+  printf("Window number is %d",windowNumber);
+#endif
+}
+
 #define RAND ((float)rand()/(float)RAND_MAX)
  
 float randBetween(float lower, float upper)
@@ -16,7 +29,7 @@ float randBetween(float lower, float upper)
   return result;
 }
 
-/*
+/* For testing...
 int main()
 {
   int i = 0;

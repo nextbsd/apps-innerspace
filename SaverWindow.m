@@ -11,15 +11,20 @@
   target = t;
 }
 
-
 - (void) keyDown: (NSEvent *)theEvent
 {
-  [NSApp sendAction: action to: target from: self];
+  if([self level] != NSDesktopWindowLevel)
+    {
+      [NSApp sendAction: action to: target from: self];
+    }
 }
 
 - (void) mouseUp: (NSEvent *)theEvent
 {
-  [NSApp sendAction: action to: target from: self];
+  if([self level] != NSDesktopWindowLevel)
+    {
+      [NSApp sendAction: action to: target from: self];
+    }
 }
 
 - (BOOL) canBecomeKeyWindow

@@ -19,6 +19,12 @@
   SaverWindow *saverWindow;
   NSTimer *timer;
   ModuleView *currentModule;
+  NSMutableArray *modules;
+  
+  // booleans...
+  BOOL isSaver;
+  BOOL isLocker;
+  BOOL isInBackground;
 }
 // methods called from interface
 - (void) selectSaver: (id)sender;
@@ -33,4 +39,5 @@
 - (void) startTimer;
 - (void) stopTimer;
 - (void) runAnimation: (NSTimer *)atimer;
+- (void) loadModule: (NSString *)moduleName;
 @end

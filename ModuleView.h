@@ -20,6 +20,7 @@
 - (NSString *) windowTitle;
 
 // notification methods..
+- (void) willEnterScreenSaverMode;
 - (void) enteredScreenSaverMode;
 - (void) willExitScreenSaverMode;
 @end

@@ -2,6 +2,7 @@
 
 #import <AppKit/AppKit.h>
 #import "SaverWindow.h"
+#import "ModuleView.h"
 
 @interface InnerSpaceController : NSObject
 {
@@ -16,6 +17,8 @@
 
   // internal vars.
   SaverWindow *saverWindow;
+  NSTimer *timer;
+  ModuleView *currentModule;
 }
 // methods called from interface
 - (void) selectSaver: (id)sender;
@@ -25,6 +28,9 @@
 - (void) doSaver: (id)sender;
 
 // internal methods
-- (NSArray *)modules;
-- (void)createSaverWindow;
+- (NSArray *) modules;
+- (void) createSaverWindow: (BOOL)desktop;
+- (void) startTimer;
+- (void) stopTimer;
+- (void) runAnimation: (NSTimer *)atimer;
 @end

@@ -37,7 +37,8 @@
 - (void) doSaver: (id)sender
 {
   NSLog(@"Called");
-  [self createSaverWindow];
+  [self createSaverWindow: YES];
+  [self startTimer];
   /* insert your code here */
 }
 
@@ -47,17 +48,34 @@
 }
 
 // internal methods..
-- (void)createSaverWindow
+- (void)createSaverWindow: (BOOL)desktop
 {
-  NSRect r = [[NSScreen mainScreen] frame];
-  saverWindow = [[SaverWindow alloc] initWithContentRect: r
+  NSRect frame = [[NSScreen mainScreen] frame];
+  int store = NSBackingStoreNonretained;
+
+  // dertermine backing type...
+  NS_DURING
+  if([currentModule respondsToSelector: @selector(useBufferedWindow)])
+    {
+      if([currentModule useBufferedWindow])
+	{
+	  store = NSBackingStoreBuffered;
+	}
+    }
+  NS_HANDLER
+    NSLog(@"EXCEPTION: %@",localException);
+    store = NSBackingStoreBuffered;
+  NS_ENDHANDLER
+
+  // create the window...
+  saverWindow = [[SaverWindow alloc] initWithContentRect: frame
 				     styleMask: NSBorderlessWindowMask
-				     backing: NSBackingStoreNonretained
+				     backing: store
 				     defer: NO];
 
   NSLog(@"In here: %@", saverWindow); 
   
-
+  
   // set some attributes...
   [saverWindow setAction: @selector(stopSaver) forTarget: self];
   [saverWindow setAutodisplay: YES];
@@ -65,7 +83,17 @@
   [saverWindow setExcludedFromWindowsMenu: YES];
   [saverWindow setBackgroundColor: [NSColor blackColor]];
   [saverWindow setOneShot:YES];
-  [saverWindow setLevel: NSScreenSaverWindowLevel];
+
+  // run the saver in on the desktop.
+  if(desktop)
+    {
+      [saverWindow setLevel: NSDesktopWindowLevel];
+    } 
+  else
+    {
+      [saverWindow setLevel: NSScreenSaverWindowLevel];
+    }
+
   [saverWindow makeKeyAndOrderFront: self];
 }
 
@@ -78,7 +106,50 @@
 - (void) stopSaver
 {
   [self destroySaverWindow];
+  [self stopTimer];
   NSLog(@"stopping");
+}
+
+// timer managment
+- (void) startTimer
+{
+  NSTimeInterval time = 0.03;
+
+  NS_DURING
+    {
+      if([currentModule respondsToSelector: @selector(animationDelayTime)])
+	{
+	  time = [currentModule animationDelayTime];
+	}
+    }
+  NS_HANDLER
+    {
+      NSLog(@"EXCEPTION: %@", localException);
+      time = 0.03;
+    }
+  NS_ENDHANDLER
+    
+  timer = [NSTimer scheduledTimerWithTimeInterval: time
+		   target: self
+		   selector: @selector(runAnimation:)
+		   userInfo: nil
+		   repeats: YES];
+  RETAIN(timer);
+}
+
+- (void) stopTimer
+{
+  if(timer != nil)
+    {
+      [timer invalidate];
+      RELEASE(timer);
+      timer = nil;
+    }
+}
+
+- (void) runAnimation: (NSTimer *)atimer
+{
+  NSLog(@"Animation");
 }
 @end
 

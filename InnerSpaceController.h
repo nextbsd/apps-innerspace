@@ -15,6 +15,7 @@
   id run;
   id controlsView;
   id emptyView;
+  id lockerPanel;
 
   // internal vars.
   SaverWindow *saverWindow;

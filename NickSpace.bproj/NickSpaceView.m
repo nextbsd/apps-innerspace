@@ -3,6 +3,9 @@
 #import <values.h>
 #import <time.h>
 
+#define COLORWIDTH 2
+#define ERASEWIDTH 5
+
 /** Draw a line segment */
 void doSeg(float x1, float y1, float x2, float y2)
 {
@@ -327,44 +330,57 @@ void doSeg(float x1, float y1, float x2, float y2)
   
   /* erase tail edges, as needed (calc'ed last time through */
   PSsetgray(0);
-  for (i=0;i<trailCount;i++) {
-    if ((!trails[i].dead && trails[i].maxLength > trails[i].currentLength) ||
-	trails[i].currentLength<=1) 
-      continue;
-    if (trails[i].tailOrient == UP || trails[i].tailOrient == DOWN) {
-      doSeg((float)((trails[i].tailEdge.col + 1) * spacing),
-	    (float)(trails[i].tailEdge.row * spacing),
-	    (float)((trails[i].tailEdge.col + 1) * spacing),
-	    (float)((trails[i].tailEdge.row + 1) * spacing));
-    } else {
-      doSeg((float)(trails[i].tailEdge.col * spacing),
-	    (float)((trails[i].tailEdge.row + 1) * spacing),
-	    (float)((trails[i].tailEdge.col + 1) * spacing),
-	    (float)((trails[i].tailEdge.row + 1) * spacing));
-    }
-  }
-  PSstroke();
-  
-  if (image) {
-    [image lockFocus];
-    /* erase tail edges, as needed (calc'ed last time through) */
-    PSsetgray(0);
-    for (i=0;i<trailCount;i++) {
+  PSsetlinewidth(ERASEWIDTH);
+  for (i=0;i<trailCount;i++) 
+    {
       if ((!trails[i].dead && trails[i].maxLength > trails[i].currentLength) ||
 	  trails[i].currentLength<=1) 
 	continue;
-      if (trails[i].tailOrient == UP || trails[i].tailOrient == DOWN) {
-	doSeg((float)((trails[i].tailEdge.col + 1) * spacing),
-	      (float)(trails[i].tailEdge.row * spacing),
-	      (float)((trails[i].tailEdge.col + 1) * spacing),
-	      (float)((trails[i].tailEdge.row + 1) * spacing));
-      } else {
-	doSeg((float)(trails[i].tailEdge.col * spacing),
-	      (float)((trails[i].tailEdge.row + 1) * spacing),
-	      (float)((trails[i].tailEdge.col + 1) * spacing),
-	      (float)((trails[i].tailEdge.row + 1) * spacing));
-      }
+      
+      if (trails[i].tailOrient == UP || trails[i].tailOrient == DOWN) 
+	{
+	  doSeg((float)((trails[i].tailEdge.col + 1) * spacing),
+		(float)(trails[i].tailEdge.row * spacing),
+		(float)((trails[i].tailEdge.col + 1) * spacing),
+		(float)((trails[i].tailEdge.row + 1) * spacing));
+	} 
+      else 
+	{
+	  doSeg((float)(trails[i].tailEdge.col * spacing),
+		(float)((trails[i].tailEdge.row + 1) * spacing),
+		(float)((trails[i].tailEdge.col + 1) * spacing),
+		(float)((trails[i].tailEdge.row + 1) * spacing));
+	}
     }
+  PSstroke();
+  
+  if (image) 
+    {
+      [image lockFocus];
+      /* erase tail edges, as needed (calc'ed last time through) */
+      PSsetgray(0);
+      PSsetlinewidth(ERASEWIDTH);
+      for (i=0;i<trailCount;i++) 
+	{
+	  if ((!trails[i].dead && trails[i].maxLength > trails[i].currentLength) ||
+	      trails[i].currentLength<=1) 
+	    continue;
+
+	  if (trails[i].tailOrient == UP || trails[i].tailOrient == DOWN) 
+	    {
+	      doSeg((float)((trails[i].tailEdge.col + 1) * spacing),
+		    (float)(trails[i].tailEdge.row * spacing),
+		    (float)((trails[i].tailEdge.col + 1) * spacing),
+		    (float)((trails[i].tailEdge.row + 1) * spacing));
+	    } 
+	  else 
+	    {
+	      doSeg((float)(trails[i].tailEdge.col * spacing),
+		    (float)((trails[i].tailEdge.row + 1) * spacing),
+		    (float)((trails[i].tailEdge.col + 1) * spacing),
+		    (float)((trails[i].tailEdge.row + 1) * spacing));
+	    }
+	}
     PSstroke();
     [image unlockFocus];
   }
@@ -375,56 +391,70 @@ void doSeg(float x1, float y1, float x2, float y2)
   /* draw head edges, as needed */
   currCol = 0; // historical accident--careful not to confuse with currColor
   [[[colors objectAtIndex: currCol] colorValue] set];
-  for(i = 0;i<trailCount; i++) {
-    if (i==(trailCount*(currCol+1))/numColors) {
-      currCol++;
-      PSstroke();
-      [[[colors objectAtIndex: currCol] colorValue] set];
-    }			
-    if (trails[i].dead)
-      continue;
-    if (trails[i].headOrient == UP || trails[i].headOrient == DOWN) {
-      PSmoveto((float)((trails[i].headEdge.col + 1) * spacing),
-	       (float)(trails[i].headEdge.row * spacing));
-      PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
-	       (float)((trails[i].headEdge.row + 1) * spacing));
-    } else {
-      PSmoveto((float)(trails[i].headEdge.col * spacing),
-	       (float)((trails[i].headEdge.row + 1) * spacing));
-      PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
-	       (float)((trails[i].headEdge.row + 1) * spacing));
-    }
-  }	
-  PSstroke();
-  
-  if (image) {
-    [image lockFocus];
-    currCol = 0;
-    [[[colors objectAtIndex: currCol] colorValue] set];
-    for(i = 0;i<trailCount; i++) {
-      if (i==(trailCount*(currCol+1))/3) {
-	currCol++;
-	PSstroke();
-	[[[colors objectAtIndex: currCol] colorValue] set];
-
-      }			
+  for(i = 0;i<trailCount; i++) 
+    {
+      PSsetlinewidth(COLORWIDTH);
+      if (i==(trailCount*(currCol+1))/numColors) 
+	{
+	  currCol++;
+	  PSstroke();
+	  [[[colors objectAtIndex: currCol] colorValue] set];
+	}			
       if (trails[i].dead)
 	continue;
-      if (trails[i].headOrient == UP || trails[i].headOrient == DOWN) {
-	PSmoveto((float)((trails[i].headEdge.col + 1) * spacing),
-		 (float)(trails[i].headEdge.row * spacing));
-	PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
-		 (float)((trails[i].headEdge.row + 1) * spacing));
-      } else {
-	PSmoveto((float)(trails[i].headEdge.col * spacing),
-		 (float)((trails[i].headEdge.row + 1) * spacing));
-	PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
-		 (float)((trails[i].headEdge.row + 1) * spacing));
-      }
+      if (trails[i].headOrient == UP || trails[i].headOrient == DOWN) 
+	{
+	  PSmoveto((float)((trails[i].headEdge.col + 1) * spacing),
+		   (float)(trails[i].headEdge.row * spacing));
+	  PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
+		   (float)((trails[i].headEdge.row + 1) * spacing));
+	} 
+      else 
+	{
+	  PSmoveto((float)(trails[i].headEdge.col * spacing),
+		   (float)((trails[i].headEdge.row + 1) * spacing));
+	  PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
+		   (float)((trails[i].headEdge.row + 1) * spacing));
+	}
     }	
-    PSstroke();
-    [image unlockFocus];
-  }		
+  PSstroke();
+  
+  if (image)
+    {
+      [image lockFocus];
+      currCol = 0;
+      [[[colors objectAtIndex: currCol] colorValue] set];
+      PSsetlinewidth(COLORWIDTH);
+      for(i = 0;i<trailCount; i++) 
+	{
+	  if (i==(trailCount*(currCol+1))/3) 
+	    {
+	      currCol++;
+	      PSstroke();
+	      [[[colors objectAtIndex: currCol] colorValue] set];
+	    }			
+
+	  if (trails[i].dead)
+	    continue;
+
+	  if (trails[i].headOrient == UP || trails[i].headOrient == DOWN) 
+	    {
+	      PSmoveto((float)((trails[i].headEdge.col + 1) * spacing),
+		       (float)(trails[i].headEdge.row * spacing));
+	      PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
+		       (float)((trails[i].headEdge.row + 1) * spacing));
+	    } 
+	  else 
+	    {
+	      PSmoveto((float)(trails[i].headEdge.col * spacing),
+		       (float)((trails[i].headEdge.row + 1) * spacing));
+	      PSlineto((float)((trails[i].headEdge.col + 1) * spacing),
+		       (float)((trails[i].headEdge.row + 1) * spacing));
+	    }
+	}	
+      PSstroke();
+      [image unlockFocus];
+    }		
 }
 
 -(id)initWithFrame:(NSRect)frameRect

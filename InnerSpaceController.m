@@ -64,10 +64,20 @@ extern void makeWindowOmniPresent(int windowNumber);
 {
   NSDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
 					  @"Black",@"currentModule",nil];
+  int row = 0;
+
   defaults = [NSUserDefaults standardUserDefaults];
   [defaults registerDefaults: appDefs];
   
   currentModuleName = [defaults stringForKey: @"currentModule"];
+  row = [[modules allKeys] indexOfObject: currentModuleName];
+  
+  if(row < [[modules allKeys] count])
+    {
+      [moduleList reloadColumn: 0];
+      [moduleList selectRow: row inColumn: 0];
+    }
+
   NSDebugLog(@"current module = %@",currentModuleName);
 }
 
@@ -114,7 +124,17 @@ extern void makeWindowOmniPresent(int windowNumber);
   [self _findModules];
   [self _loadDefaults];
   [self loadModule: currentModuleName];
-  // RETAIN(window); // retain the top level window.
+  RETAIN(emptyView); // hold on to this.
+}
+
+- (void) dealloc
+{
+  RELEASE(saverWindow);
+  RELEASE(timer);
+  RELEASE(currentModule);
+  RELEASE(modules);
+  RELEASE(currentModuleName);
+  RELEASE(emptyView);
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
@@ -340,7 +360,6 @@ extern void makeWindowOmniPresent(int windowNumber);
   NS_ENDHANDLER
  
   // Remove the view...
-  //[[(NSBox *)controlsView contentView] removeFromSuperview];
   [(NSBox *)controlsView setContentView: emptyView];
   [(NSBox *)controlsView setBorderType: NSGrooveBorder];
 }
@@ -387,7 +406,7 @@ extern void makeWindowOmniPresent(int windowNumber);
 	  [self _stopModule: currentModule];
 	}
       
-      currentModule = (ModuleView *)newModule;
+      ASSIGN(currentModule, (ModuleView *)newModule);
       [self _startModule: currentModule];
       [controlsView display];
     }
@@ -437,6 +456,7 @@ extern void makeWindowOmniPresent(int windowNumber);
 
 - (NSString*) browser: (NSBrowser*)sender titleOfColumn: (int)column
 {
+  NSLog(@"Delegate called....");
   return @"Modules";
 }
 

@@ -40,7 +40,8 @@ ADDITIONAL_GUI_LIBS +=
 
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
-InnerSpaceInfo.plist 
+InnerSpaceInfo.plist \
+Black.bproj/Black.InnerSpace 
 
 #
 # Header files
@@ -64,6 +65,12 @@ InnerSpaceController.m
 #
 
 InnerSpace_C_FILES= 
+
+#
+# Subprojects
+#
+
+SUBPROJECTS = Black.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

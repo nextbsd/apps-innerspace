@@ -19,8 +19,10 @@
   SaverWindow *saverWindow;
   NSTimer *timer;
   ModuleView *currentModule;
-  NSMutableArray *modules;
-  
+  NSMutableDictionary *modules;
+  NSUserDefaults *defaults;
+  NSString *currentModuleName;
+
   // booleans...
   BOOL isSaver;
   BOOL isLocker;
@@ -34,7 +36,7 @@
 - (void) doSaver: (id)sender;
 
 // internal methods
-- (NSArray *) modules;
+- (NSMutableDictionary *) modules;
 - (void) createSaverWindow: (BOOL)desktop;
 - (void) startTimer;
 - (void) stopTimer;

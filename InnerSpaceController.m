@@ -2,6 +2,7 @@
 
 #include <AppKit/AppKit.h>
 #include <Foundation/NSString.h>
+#include <Foundation/NSUserDefaults.h>
 #include "InnerSpaceController.h"
 
 @implementation InnerSpaceController
@@ -14,7 +15,8 @@
 
   if(row >= 0)
     {
-      module = [modules objectAtIndex: row];
+      module = [[modules allKeys] objectAtIndex: row];
+      [defaults setObject: module forKey: @"currentModule"];
       [self loadModule: module];
     }
 
@@ -22,24 +24,20 @@
   /* insert your code here */
 }
 
-
 - (void) inBackground: (id)sender
 {
   isInBackground = ([inBackground state] == NSOnState);
 }
-
 
 - (void) locker: (id)sender
 {
   isLocker = ([locker state] == NSOnState);
 }
 
-
 - (void) saver: (id)sender
 {
   isSaver = ([saver state] == NSOnState);
 }
-
 
 - (void) doSaver: (id)sender
 {
@@ -49,12 +47,23 @@
   /* insert your code here */
 }
 
-- (NSArray *) modules
+// internal methods..
+- (void) _loadDefaults
+{
+  NSDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
+					  @"Black",@"currentModule",nil];
+  defaults = [NSUserDefaults standardUserDefaults];
+  [defaults registerDefaults: appDefs];
+
+  currentModuleName = [defaults stringForKey: @"currentModule"];
+  NSLog(@"current module = %@",currentModuleName);
+}
+
+- (NSMutableDictionary *) modules
 {
   return modules;
 }
 
-// internal methods..
 - (void) _findModulesInDirectory: (NSString *) directory
 {
   NSFileManager *fm = [NSFileManager defaultManager];
@@ -62,11 +71,19 @@
   NSEnumerator *en = [files objectEnumerator];
   id item = nil;
 
+  NSLog(@"directory = %@",directory);
   while((item = [en nextObject]) != nil)
     {
+      NSLog(@"file = %@",item);
       if([[item pathExtension] isEqualToString: @"InnerSpace"])
 	{
-	  [modules addObject: item];
+	  NSString *fullPath = [directory stringByAppendingPathComponent: item];
+	  NSMutableDictionary *infoDict = [NSMutableDictionary dictionary];
+	  
+	  [infoDict setObject: fullPath forKey: @"Path"];
+
+	  [modules setObject: infoDict forKey: [item stringByDeletingPathExtension]];
+	  NSLog(@"modules = %@",modules);
 	}
     }
 }
@@ -79,7 +96,10 @@
 
 - (void) awakeFromNib
 {
+  modules = RETAIN([NSMutableDictionary dictionary]);
   [self _findModules];
+  [self _loadDefaults];
+  [self loadModule: currentModuleName];
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
@@ -192,11 +212,33 @@
     }
   NS_ENDHANDLER
     
-  timer = [NSTimer scheduledTimerWithTimeInterval: time
-		   target: self
-		   selector: @selector(runAnimation:)
-		   userInfo: nil
-		   repeats: YES];
+  if(![currentModule respondsToSelector: @selector(isBoringScreenSaver)])
+    {
+      timer = [NSTimer scheduledTimerWithTimeInterval: time
+		       target: self
+		       selector: @selector(runAnimation:)
+		       userInfo: nil
+		       repeats: YES];
+    }
+  else
+    {
+      // if the screen saver is "boring" it should only run oneStep
+      // once.   This means that it will not waste CPU cycles spinning and
+      // doing nothing...
+      NS_DURING
+	// do one frame..
+	[currentModule lockFocus];
+        if([currentModule respondsToSelector: @selector(didLockFocus)])
+	  {
+	    [currentModule didLockFocus];
+	  }
+	[currentModule oneStep];
+	[saverWindow flushWindow];
+	[currentModule unlockFocus];
+      NS_HANDLER
+	NSLog(@"EXCEPTION: %@",localException);
+      NS_ENDHANDLER      
+    }
   RETAIN(timer);
 }
 
@@ -212,7 +254,6 @@
 
 - (void) runAnimation: (NSTimer *)atimer
 {
-  // NSLog(@"Animation: %@",[inBackground intValue]);
   if(!saverWindow)
     {
       return;
@@ -220,20 +261,17 @@
   else
     {
       NS_DURING
-	{
-	  // do one frame..
-	  [currentModule lockFocus];
-	  if([currentModule respondsToSelector: @selector(didLockFocus)])
-	    {
-	      [currentModule didLockFocus];
-	    }
-	  [currentModule oneStep];
-	  [saverWindow flushWindow];
-	  [currentModule unlockFocus];
-	}
+	// do one frame..
+	[currentModule lockFocus];
+        if([currentModule respondsToSelector: @selector(didLockFocus)])
+	  {
+	    [currentModule didLockFocus];
+	  }
+	[currentModule oneStep];
+	[saverWindow flushWindow];
+	[currentModule unlockFocus];
       NS_HANDLER
-	{
-	}
+	NSLog(@"EXCEPTION while in running animation: %@",localException);
       NS_ENDHANDLER
     }
 }
@@ -245,15 +283,15 @@
     if([moduleView respondsToSelector: @selector(inspector:)])
       {
 	inspectorView = [moduleView inspector: self];
-	[controlsView setBorderType: NSNoBorder];
-	[controlsView setContentView: inspectorView];
+	[(NSBox *)controlsView setBorderType: NSNoBorder];
+	[(NSBox *)controlsView setContentView: inspectorView];
 	if([moduleView respondsToSelector: @selector(inspectorInstalled)])
 	  {
 	    [moduleView inspectorInstalled];
 	  }
       }
   NS_HANDLER
-    NSLog(@"EXCEPTION while in _startModule: %@",localException);
+
   NS_ENDHANDLER
 }
 
@@ -268,8 +306,20 @@
     NSLog(@"EXCEPTION while in _stopModule: %@",localException);
   NS_ENDHANDLER
 
-  [controlsView setContentView: nil];
-  [controlsView setBorderType: NSGrooveBorder];
+  [(NSBox *)controlsView setContentView: nil];
+  [(NSBox *)controlsView setBorderType: NSGrooveBorder];
+}
+
+- (NSString *) _pathForModule: (NSString *) moduleName
+{
+  NSString *result = nil;
+  NSMutableDictionary *dict;
+
+  if(dict = [modules objectForKey: moduleName])
+    {
+      result = [dict objectForKey: @"Path"];
+    }
+  return result;
 }
 
 - (void) loadModule: (NSString *)moduleName
@@ -281,15 +331,17 @@
       NSBundle *bundle = nil;
       Class    theViewClass;
       id       module = nil;
+      NSString *bundlePath = [self _pathForModule: moduleName];
       
-      bundle = [NSBundle bundleWithPath: moduleName];
+      NSDebugLog(@"Bundle path = %@",bundlePath);
+      bundle = [NSBundle bundleWithPath: bundlePath];
       if(bundle != nil)
 	{
 	  NSLog(@"Bundle loaded");
 	  theViewClass = [bundle principalClass];
 	  if(theViewClass != nil)
 	    {
-	      newModule = [[theViewClass alloc] initWithFrame: [NSScreen frame]];
+	      newModule = [[theViewClass alloc] initWithFrame: [[NSScreen mainScreen] frame]];
 	    }
 	}
     }
@@ -334,7 +386,7 @@
 - (void) browser: (NSBrowser *)sender createRowsForColumn: (int)column
 	inMatrix: (NSMatrix *)matrix
 {
-  NSEnumerator     *e = [[self modules] objectEnumerator];
+  NSEnumerator     *e = [[[self modules] allKeys] objectEnumerator];
   NSString    *module = nil;
   NSBrowserCell *cell = nil;
   int i = 0;

@@ -1,0 +1,20 @@
+2003-07-26 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* Version 0.0.2: This is the initial release so people can
+	start to take a look at what's been done.
+
+2003-06-23 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* InnerSpaceContoller.[hm]: Bugfixes and improvements.
+	Started on code to put SaverWindow into the background as an
+	"omnipresent" window.
+	* Black.bproj: Added. Contains "Black" screensaver
+	* Boxes.bproj: Added. Contains "Boxes" screensaver
+	
+2003-01-12 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* InnerSpaceController.[hm]: Added
+	* ModuleView.h: Added
+	* InnerSpace.gorm: Added
+	* SaverWindow.[hm]: Added
+	* main.m: Added

@@ -6,7 +6,7 @@
 
 // I need to put defines here to make it not tied to X, 
 // nor any backend..  this is temporary.
-#ifdef GNUSTEP
+#ifdef HAVE_OMNIPRESENT
 #include <X11/Xlib.h>
 #endif
 

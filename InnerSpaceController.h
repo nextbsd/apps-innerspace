@@ -14,6 +14,7 @@
   id saver;
   id run;
   id controlsView;
+  id emptyView;
 
   // internal vars.
   SaverWindow *saverWindow;

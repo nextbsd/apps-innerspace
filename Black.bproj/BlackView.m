@@ -26,7 +26,7 @@
 - (void)oneStep
 {
   // do nothing...
-  NSLog(@"One step called");
+  // NSLog(@"One step called");
 }
 @end
 

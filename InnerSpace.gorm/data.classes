@@ -156,7 +156,10 @@
 	    locker,
 	    inBackground,
 	    moduleList,
-	    window
+	    window,
+	    controlsView,
+	    controlsView,
+	    emptyView
 	);
 	Super = NSObject;
     };

@@ -5,6 +5,8 @@
 #include <Foundation/NSUserDefaults.h>
 #include "InnerSpaceController.h"
 
+#define TIME 0.07
+
 @implementation InnerSpaceController
 
 // interface callbacks
@@ -20,7 +22,7 @@
       [self loadModule: module];
     }
 
-  NSLog(@"Called");
+  NSDebugLog(@"Called");
   /* insert your code here */
 }
 
@@ -41,10 +43,9 @@
 
 - (void) doSaver: (id)sender
 {
-  NSLog(@"Called");
+  NSDebugLog(@"Called");
   [self createSaverWindow: YES];
   [self startTimer];
-  /* insert your code here */
 }
 
 // internal methods..
@@ -54,9 +55,9 @@
 					  @"Black",@"currentModule",nil];
   defaults = [NSUserDefaults standardUserDefaults];
   [defaults registerDefaults: appDefs];
-
+  
   currentModuleName = [defaults stringForKey: @"currentModule"];
-  NSLog(@"current module = %@",currentModuleName);
+  NSDebugLog(@"current module = %@",currentModuleName);
 }
 
 - (NSMutableDictionary *) modules
@@ -71,10 +72,10 @@
   NSEnumerator *en = [files objectEnumerator];
   id item = nil;
 
-  NSLog(@"directory = %@",directory);
+  NSDebugLog(@"directory = %@",directory);
   while((item = [en nextObject]) != nil)
     {
-      NSLog(@"file = %@",item);
+      NSDebugLog(@"file = %@",item);
       if([[item pathExtension] isEqualToString: @"InnerSpace"])
 	{
 	  NSString *fullPath = [directory stringByAppendingPathComponent: item];
@@ -83,15 +84,17 @@
 	  [infoDict setObject: fullPath forKey: @"Path"];
 
 	  [modules setObject: infoDict forKey: [item stringByDeletingPathExtension]];
-	  NSLog(@"modules = %@",modules);
+	  NSDebugLog(@"modules = %@",modules);
 	}
     }
 }
 
 - (void) _findModules
 {
-  [self _findModulesInDirectory: [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: @"Resources"]];
-  [self _findModulesInDirectory: [NSHomeDirectory() stringByAppendingPathComponent: @"/GNUstep/Library/InnerSpace"]];
+  [self _findModulesInDirectory: [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: 
+								       @"Resources"]];
+  [self _findModulesInDirectory: [NSHomeDirectory() stringByAppendingPathComponent: 
+						   @"/GNUstep/Library/InnerSpace"]];
 }
 
 - (void) awakeFromNib
@@ -105,9 +108,15 @@
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
 {
   // The saver is *always running...
-  NSLog(@"Notified");
   [self doSaver: self];
 }
+
+#ifdef GNUSTEP
+- (void) _makeSaverWindowOmniPresent
+{
+  NSDebugLog(@"Make Window Omnipresent...");
+}
+#endif
 
 - (void) createSaverWindow: (BOOL)desktop
 {
@@ -134,8 +143,6 @@
 				     backing: store
 				     defer: NO];
 
-  NSLog(@"In here: %@", saverWindow); 
-  
   // set some attributes...
   [saverWindow setAction: @selector(stopSaver) forTarget: self];
   [saverWindow setAutodisplay: YES];
@@ -155,6 +162,9 @@
   if(desktop)
     {
       [saverWindow setLevel: NSDesktopWindowLevel];
+#ifdef GNUSTEP
+      [self _makeSaverWindowOmniPresent];
+#endif
     } 
   else
     {
@@ -187,16 +197,16 @@
 
 - (void) stopSaver
 {
-  NSLog(@"%@",[inBackground stringValue]);
+  NSDebugLog(@"%@",[inBackground stringValue]);
   [self destroySaverWindow];
   [self stopTimer];
-  NSLog(@"stopping");
+  NSDebugLog(@"stopping");
 }
 
 // timer managment
 - (void) startTimer
 {
-  NSTimeInterval time = 0.03;
+  NSTimeInterval time = TIME;
 
   NS_DURING
     {
@@ -208,7 +218,7 @@
   NS_HANDLER
     {
       NSLog(@"EXCEPTION: %@", localException);
-      time = 0.03;
+      time = TIME;
     }
   NS_ENDHANDLER
     
@@ -283,17 +293,20 @@
     if([moduleView respondsToSelector: @selector(inspector:)])
       {
 	inspectorView = [moduleView inspector: self];
-	[(NSBox *)controlsView setBorderType: NSNoBorder];
+	RETAIN(inspectorView);
+	// NSLog(@"inspectorView %@",inspectorView);
+	[(NSBox *)controlsView setBorderType: NSGrooveBorder];
 	[(NSBox *)controlsView setContentView: inspectorView];
 	if([moduleView respondsToSelector: @selector(inspectorInstalled)])
 	  {
+	    NSLog(@"installed");
 	    [moduleView inspectorInstalled];
 	  }
       }
     [self createSaverWindow: YES];
     [self startTimer];
   NS_HANDLER
-
+    NSLog(@"EXCEPTION: %@",localException);
   NS_ENDHANDLER
 }
 
@@ -308,8 +321,10 @@
   NS_HANDLER
     NSLog(@"EXCEPTION while in _stopModule: %@",localException);
   NS_ENDHANDLER
-
-  [(NSBox *)controlsView setContentView: nil];
+ 
+  // Remove the view...
+  //[[(NSBox *)controlsView contentView] removeFromSuperview];
+  [(NSBox *)controlsView setContentView: emptyView];
   [(NSBox *)controlsView setBorderType: NSGrooveBorder];
 }
 
@@ -340,7 +355,7 @@
       bundle = [NSBundle bundleWithPath: bundlePath];
       if(bundle != nil)
 	{
-	  NSLog(@"Bundle loaded");
+	  NSDebugLog(@"Bundle loaded");
 	  theViewClass = [bundle principalClass];
 	  if(theViewClass != nil)
 	    {

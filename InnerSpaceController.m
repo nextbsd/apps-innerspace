@@ -114,6 +114,7 @@ extern void makeWindowOmniPresent(int windowNumber);
   [self _findModules];
   [self _loadDefaults];
   [self loadModule: currentModuleName];
+  // RETAIN(window); // retain the top level window.
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
@@ -349,7 +350,7 @@ extern void makeWindowOmniPresent(int windowNumber);
   NSString *result = nil;
   NSMutableDictionary *dict;
 
-  if(dict = [modules objectForKey: moduleName])
+  if((dict = [modules objectForKey: moduleName]) != nil)
     {
       result = [dict objectForKey: @"Path"];
     }
@@ -364,7 +365,6 @@ extern void makeWindowOmniPresent(int windowNumber);
     {
       NSBundle *bundle = nil;
       Class    theViewClass;
-      id       module = nil;
       NSString *bundlePath = [self _pathForModule: moduleName];
       
       NSDebugLog(@"Bundle path = %@",bundlePath);

@@ -1,7 +1,12 @@
-For additional modules, please look at:
-http://student.santarosa.edu/~aperez/GNUstep/InnerSpaceModulePack1.tgz
+These modules are ports of those from the BackSpace days.   It was fairly
+easy to get them to work under InnerSpace.app.  
 
-These were ported by me and Alex Perez has graciously offered to host 
-them.
+You need to copy these into your home directory 
+at GNUstep/Library/InnerSpace after you build them so that InnerSpace can
+load them.
 
-Thanks, GJC
+Please contact me if you have any questions.
+
+Gregory Casamento
+greg_casamento@yahoo.com
+

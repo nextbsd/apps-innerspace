@@ -38,7 +38,8 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
-Boxes.bproj/Boxes.InnerSpace 
+Boxes.bproj/Boxes.InnerSpace \
+Qix.bproj/Qix.InnerSpace 
 
 #
 # Header files
@@ -67,7 +68,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj
+SUBPROJECTS = Black.bproj Boxes.bproj Qix.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

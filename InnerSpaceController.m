@@ -44,6 +44,14 @@
 - (void) doSaver: (id)sender
 {
   NSDebugLog(@"Called");
+  // [self createSaverWindow: NO];
+  // [self startTimer];
+  [saverWindow setLevel: NSScreenSaverWindowLevel];
+}
+
+- (void) doSaverInBackground: (id)sender
+{
+  NSDebugLog(@"Called");
   [self createSaverWindow: YES];
   [self startTimer];
 }
@@ -108,7 +116,7 @@
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
 {
   // The saver is *always running...
-  [self doSaver: self];
+  [self doSaverInBackground: self];
 }
 
 #ifdef GNUSTEP
@@ -144,7 +152,7 @@
 				     defer: NO];
 
   // set some attributes...
-  [saverWindow setAction: @selector(stopSaver) forTarget: self];
+  [saverWindow setAction: @selector(stopAndStartSaver) forTarget: self];
   [saverWindow setAutodisplay: YES];
   [saverWindow makeFirstResponder: saverWindow];
   [saverWindow setExcludedFromWindowsMenu: YES];
@@ -201,6 +209,18 @@
   [self destroySaverWindow];
   [self stopTimer];
   NSDebugLog(@"stopping");
+}
+
+- (void) stopAndStartSaver
+{
+  /*
+  NSDebugLog(@"%@",[inBackground stringValue]);
+  [self destroySaverWindow];
+  [self stopTimer];
+  NSDebugLog(@"stopping");
+  [self doSaverInBackground: self];
+  */
+  [saverWindow setLevel: NSDesktopWindowLevel];
 }
 
 // timer managment

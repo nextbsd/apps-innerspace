@@ -35,6 +35,9 @@
 - (void) locker: (id)sender;
 - (void) saver: (id)sender;
 - (void) doSaver: (id)sender;
+- (void) doSaverInBackground: (id)sender;
+- (void) stopSaver; // : (id)sender;
+- (void) stopAndStartSaver; // : (id)sender;
 
 // internal methods
 - (NSMutableDictionary *) modules;

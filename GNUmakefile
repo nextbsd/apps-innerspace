@@ -17,7 +17,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 PACKAGE_NAME=InnerSpace
 APP_NAME=InnerSpace
 GNUSTEP_INSTALLATION_DIR=$(GNUSTEP_LOCAL_ROOT)/
-InnerSpace_APPLICATION_ICON=
+InnerSpace_APPLICATION_ICON=InnerSpace.tiff
 InnerSpace_MAIN_MODEL_FILE=InnerSpace.gorm
 
 
@@ -37,8 +37,8 @@ InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 Polyhedra.bproj/Polyhedra.InnerSpace \
-ItJustStopped.bproj/ItJustStopped.InnerSpace \
-NekoView.bproj/Neko.InnerSpace
+ItJustStopped.bproj/ItJustStopped.InnerSpace 
+# NekoView.bproj/Neko.InnerSpace
 
 #
 # Header files

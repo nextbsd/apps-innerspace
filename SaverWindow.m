@@ -1,7 +1,7 @@
 /* All Rights reserved */
 
-#import <AppKit/AppKit.h>
-#import "SaverWindow.h"
+#include <AppKit/AppKit.h>
+#include "SaverWindow.h"
 
 @implementation SaverWindow
 

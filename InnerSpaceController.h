@@ -1,8 +1,8 @@
 /* All Rights reserved */
 
-#import <AppKit/AppKit.h>
-#import "SaverWindow.h"
-#import "ModuleView.h"
+#include <AppKit/AppKit.h>
+#include "SaverWindow.h"
+#include "ModuleView.h"
 
 @interface InnerSpaceController : NSObject
 {

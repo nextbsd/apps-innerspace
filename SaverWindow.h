@@ -1,6 +1,6 @@
 /* All Rights reserved */
 
-#import <AppKit/AppKit.h>
+#include <AppKit/AppKit.h>
 
 @interface SaverWindow : NSWindow
 {

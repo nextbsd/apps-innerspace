@@ -14,7 +14,7 @@
 
 - (void) makeOmnipresent
 {
-#ifdef GNUSTEP
+#ifdef HAVE_OMNIPRESENT
   GSDisplayServer *server = GSCurrentServer();
   Display *dpy = (Display *)[server serverDevice];
   void *winptr = [server windowDevice: [self windowNumber]];

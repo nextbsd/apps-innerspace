@@ -38,7 +38,7 @@ Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace
 
-Innerspace_LOCALIZED_RESOURCE_FILES = \
+InnerSpace_LOCALIZED_RESOURCE_FILES = \
 InnerSpace.gorm 
 
 InnerSpace_LANGUAGES = \

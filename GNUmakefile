@@ -33,17 +33,22 @@ ADDITIONAL_GUI_LIBS +=
 #
 
 InnerSpace_RESOURCE_FILES= \
-InnerSpace.gorm \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace
 
+Innerspace_LOCALIZED_RESOURCE_FILES = \
+InnerSpace.gorm 
+
+InnerSpace_LANGUAGES = \
+English
+
 #
 # Header files
 #
 
-InnerSpace_HEADERS= \
+InnerSpace_HEADER_FILES= \
 SaverWindow.h \
 InnerSpaceController.h
 

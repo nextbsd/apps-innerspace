@@ -35,10 +35,7 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
-Boxes.bproj/Boxes.InnerSpace \
-Polyhedra.bproj/Polyhedra.InnerSpace \
-ItJustStopped.bproj/ItJustStopped.InnerSpace 
-# NekoView.bproj/Neko.InnerSpace
+Boxes.bproj/Boxes.InnerSpace 
 
 #
 # Header files
@@ -67,8 +64,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj ItJustStopped.bproj Polyhedra.bproj \
-NekoView.bproj 
+SUBPROJECTS = Black.bproj Boxes.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

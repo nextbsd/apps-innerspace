@@ -38,8 +38,7 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
-Boxes.bproj/Boxes.InnerSpace \
-Qix.bproj/Qix.InnerSpace 
+Boxes.bproj/Boxes.InnerSpace 
 
 #
 # Header files

@@ -10,13 +10,6 @@
 
 include $(GNUSTEP_MAKEFILES)/common.make
 
-
-#
-# Subprojects
-#
-
-
-
 #
 # Main application
 #
@@ -41,7 +34,8 @@ ADDITIONAL_GUI_LIBS +=
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpaceInfo.plist \
-Black.bproj/Black.InnerSpace 
+Black.bproj/Black.InnerSpace \
+Boxes.bproj/Boxes.InnerSpace
 
 #
 # Header files
@@ -70,7 +64,7 @@ InnerSpace_C_FILES=
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj
+SUBPROJECTS = Black.bproj Boxes.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

@@ -1,3 +1,9 @@
+2005-01-17 20:29 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* InnerSpace.gorm: Move "hide:" below "Run".
+	* SaverWindow.m: Override "hide:" to prevent the saver window
+	from being hidden.
+
 2005-01-17 20:13 Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* InnerSpaceController.h: Made some formerly private methods public.

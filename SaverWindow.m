@@ -70,4 +70,9 @@
   return YES;
 }
 
+- (void) hide: (id)sender
+{
+  // Don't react to hide.  This window cannot be hidden.
+}
+
 @end

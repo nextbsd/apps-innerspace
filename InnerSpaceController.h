@@ -16,6 +16,7 @@
   id controlsView;
   id emptyView;
   id lockerPanel;
+  id speedSlider;
 
   // internal vars.
   SaverWindow *saverWindow;
@@ -45,6 +46,10 @@
 - (void) createSaverWindow: (BOOL)desktop;
 - (void) startTimer;
 - (void) stopTimer;
+- (void) resetTimer;
 - (void) runAnimation: (NSTimer *)atimer;
 - (void) loadModule: (NSString *)moduleName;
+- (void) loadDefaults;
+- (void) findModulesInDirectory: (NSString *) directory;
+- (void) findModules;
 @end

@@ -2,15 +2,8 @@
     "## Comment" = "Do NOT change this file, Gorm maintains it";
     FirstResponder = {
 	Actions = (
-	    "changeFont:",
-	    "deleteWordBackward:",
-	    "moveDown:",
-	    "moveWordForward:",
-	    "selectCorner:",
-	    "pasteAsPlainText:",
-	    "scrollLineDown:",
-	    "showWindow:",
-	    "toggleTraditionalCharacterShape:"
+	    "setSpeed:",
+	    "selectCorner:"
 	);
 	Super = NSObject;
     };
@@ -21,7 +14,8 @@
 	    "locker:",
 	    "inBackground:",
 	    "selectSaver:",
-	    "selectCorner:"
+	    "selectCorner:",
+	    "setSpeed:"
 	);
 	Outlets = (
 	    controlsView,
@@ -35,7 +29,8 @@
 	    controlsView,
 	    emptyView,
 	    lockerPanel,
-	    controlsView
+	    controlsView,
+	    speedSlider
 	);
 	Super = NSObject;
     };

@@ -5,10 +5,7 @@
 #include <Foundation/NSUserDefaults.h>
 #include "InnerSpaceController.h"
 
-#define TIME 0.07
-
-// forward declaration
-extern void makeWindowOmniPresent(int windowNumber);
+#define TIME 0.10
 
 @implementation InnerSpaceController
 
@@ -59,19 +56,33 @@ extern void makeWindowOmniPresent(int windowNumber);
   [self startTimer];
 }
 
-// internal methods..
-- (void) _loadDefaults
+- (void) resetTimer
 {
-  NSDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
-					  @"Black",@"currentModule",nil];
-  int row = 0;
+  [self stopTimer];
+  [self startTimer];
+}
 
+- (void) setSpeed: (id)sender
+{
+  [self resetTimer];
+}
+
+- (void) loadDefaults
+{
+  NSMutableDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
+						 @"Black",@"currentModule",nil];
+  int row = 0;
+  float runSpeed = 0.10;
+
+  [defaults setFloat: runSpeed forKey: @"runSpeed"];
   defaults = [NSUserDefaults standardUserDefaults];
   [defaults registerDefaults: appDefs];
   
+  runSpeed = [defaults floatForKey: @"runSpeed"];
+  [speedSlider setFloatValue: runSpeed];
+
   currentModuleName = [defaults stringForKey: @"currentModule"];
-  row = [[modules allKeys] indexOfObject: currentModuleName];
-  
+  row = [[modules allKeys] indexOfObject: currentModuleName];  
   if(row < [[modules allKeys] count])
     {
       [moduleList reloadColumn: 0];
@@ -86,7 +97,7 @@ extern void makeWindowOmniPresent(int windowNumber);
   return modules;
 }
 
-- (void) _findModulesInDirectory: (NSString *) directory
+- (void) findModulesInDirectory: (NSString *) directory
 {
   NSFileManager *fm = [NSFileManager defaultManager];
   NSArray *files = [fm directoryContentsAtPath: directory];
@@ -110,19 +121,21 @@ extern void makeWindowOmniPresent(int windowNumber);
     }
 }
 
-- (void) _findModules
+- (void) findModules
 {
-  [self _findModulesInDirectory: [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: 
-								       @"Resources"]];
-  [self _findModulesInDirectory: [NSHomeDirectory() stringByAppendingPathComponent: 
-						   @"/GNUstep/Library/InnerSpace"]];
+  [self findModulesInDirectory: [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent: 
+								      @"Resources"]];
+  [self findModulesInDirectory: [NSHomeDirectory() stringByAppendingPathComponent: 
+						  @"/GNUstep/Library/InnerSpace"]];
+  [self findModulesInDirectory: [NSHomeDirectory() stringByAppendingPathComponent: 
+						  @"/Library/InnerSpace"]];
 }
 
 - (void) awakeFromNib
 {
   modules = RETAIN([NSMutableDictionary dictionary]);
-  [self _findModules];
-  [self _loadDefaults];
+  [self findModules];
+  [self loadDefaults];
   [self loadModule: currentModuleName];
   RETAIN(emptyView); // hold on to this.
 }
@@ -187,9 +200,7 @@ extern void makeWindowOmniPresent(int windowNumber);
   if(desktop)
     {
       [saverWindow setLevel: NSDesktopWindowLevel];
-#ifdef GNUSTEP
-      makeWindowOmniPresent([saverWindow windowNumber]);
-#endif
+      [saverWindow makeOmnipresent];
     } 
   else
     {
@@ -243,10 +254,12 @@ extern void makeWindowOmniPresent(int windowNumber);
 // timer managment
 - (void) startTimer
 {
-  NSTimeInterval time = TIME;
+  NSTimeInterval runSpeed = [speedSlider floatValue];
+  NSTimeInterval time = runSpeed;
 
   NS_DURING
     {
+      // Some modules may FORCE us to run at a given speed.
       if([currentModule respondsToSelector: @selector(animationDelayTime)])
 	{
 	  time = [currentModule animationDelayTime];
@@ -255,7 +268,7 @@ extern void makeWindowOmniPresent(int windowNumber);
   NS_HANDLER
     {
       NSLog(@"EXCEPTION: %@", localException);
-      time = TIME;
+      time = runSpeed;
     }
   NS_ENDHANDLER
     

@@ -1,12 +1,12 @@
 {
-    ApplicationDescription = "A Free Software Screen Saver";
+    ApplicationDescription = "A BackSpace compatible Free Software Screen Saver";
     ApplicationIcon = "InnerSpace.tiff";
-    ApplicationName = InnerSpace;
-    ApplicationRelease = 0.1;
-    Authors = "Gregory John Casamento";
-    Copyright = "Copyright (C) 2003 by Free Software Foundation";
-    CopyrightDescription = "Released under GPL";
-    FullVersionID = 0.1;
+    ApplicationName = "InnerSpace";
+    ApplicationRelease = "0.4";
+    Authors = ("Gregory John Casamento <greg_casamento@yahoo.com>");
+    Copyright = "Copyright (C) 2003 by Gregory John Casamento";
+    CopyrightDescription = "Released under the GNU General Public License";
+    FullVersionID = 0.4;
     NOTE = "Automatically generated!";
     URL = "";
 }

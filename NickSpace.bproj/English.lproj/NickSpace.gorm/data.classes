@@ -1,0 +1,54 @@
+{
+    "## Comment" = "Do NOT change this file, Gorm maintains it";
+    FirstResponder = {
+	Actions = (
+	    "capitalizeWord:",
+	    "cut:",
+	    "deleteToMark:",
+	    "indent:",
+	    "moveBackwardAndModifySelection:",
+	    "moveToBeginningOfLine:",
+	    "moveWordBackwardAndModifySelection:",
+	    "getNumberFrom:",
+	    "scrollColor:",
+	    "removeColor:",
+	    "addColor:",
+	    "updateCurrColor:",
+	    "getMaxLenFrom:",
+	    "getSpacingFrom:",
+	    "orderFront:",
+	    "pageUp:",
+	    "performZoom:",
+	    "saveDocument:",
+	    "selectAll:",
+	    "showContextHelp:",
+	    "takeDoubleValueFrom:",
+	    "toggleContinuousSpellChecking:",
+	    "underline:",
+	    "useStandardLigatures:"
+	);
+	Super = NSObject;
+    };
+    NickSpaceView = {
+	Actions = (
+	    "getNumberFrom:",
+	    "scrollColor:",
+	    "removeColor:",
+	    "addColor:",
+	    "updateCurrColor:",
+	    "getMaxLenFrom:",
+	    "getSpacingFrom:"
+	);
+	Outlets = (
+	    addRemoveButtons,
+	    colorScrollers,
+	    colorWell,
+	    countControl,
+	    inspector,
+	    lengthControl,
+	    numColorsField,
+	    spaceControl
+	);
+	Super = NSView;
+    };
+}

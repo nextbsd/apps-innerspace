@@ -22,7 +22,6 @@ GNUSTEP_INSTALLATION_DIR=$(GNUSTEP_LOCAL_ROOT)/
 InnerSpace_APPLICATION_ICON=InnerSpace.tiff
 InnerSpace_MAIN_MODEL_FILE=InnerSpace.gorm
 
-
 #
 # Additional libraries
 #
@@ -37,7 +36,8 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.gorm \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
-Boxes.bproj/Boxes.InnerSpace 
+Boxes.bproj/Boxes.InnerSpace \
+NickSpace.bproj/NickSpace.InnerSpace
 
 #
 # Header files
@@ -66,7 +66,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj
+SUBPROJECTS = Black.bproj Boxes.bproj NickSpace.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

@@ -1,3 +1,8 @@
+2005-01-07 00:26 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* GNUmakefile: Added NickSpace.
+	* NickSpace.bproj: Added dir and all files for this module.
+
 2003-07-26 Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* Version 0.0.2: This is the initial release so people can

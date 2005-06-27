@@ -2,6 +2,19 @@
 #import <AppKit/AppKit.h>
 #import <values.h>
 #import <time.h>
+#import <limits.h>
+
+/*
+ * the file originally used MAXINT and MAXLONG
+ * ANSI c89 defines LONG_MAX and INT_MAX
+ */
+#ifndef INT_MAX
+#define INT_MAX MAXINT
+#endif
+#ifndef LONG_MAX
+#define LONG_MAX MAXLONG
+#endif
+
 
 #define COLORWIDTH 2
 #define ERASEWIDTH 5
@@ -511,9 +524,9 @@ void doSeg(float x1, float y1, float x2, float y2)
 	  // randomize an initial set of colors:
 	  for (i=0;i<numColors;i++) 
 	    {
-	      float red = (float)random()/(float)MAXLONG;
-	      float green = (float)random()/(float)MAXLONG;
-	      float blue = (float)random()/(float)MAXLONG;
+	      float red = (float)random()/(float)LONG_MAX;
+	      float green = (float)random()/(float)LONG_MAX;
+	      float blue = (float)random()/(float)LONG_MAX;
 	      NSColor *color = [NSColor colorWithCalibratedRed: red
 					green: green
 					blue: blue
@@ -647,7 +660,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   for (i=0;i<trailCount;i++) {
     trails[i].currentLength = 1;
     if (tlRatio == 1.0)
-      trails[i].maxLength = MAXINT;
+      trails[i].maxLength = INT_MAX;
     else
       trails[i].maxLength = (random() % ((maxTrailLen - minTrailLen) + 1) + minTrailLen);
     trails[i].dead = NO;
@@ -705,9 +718,9 @@ void doSeg(float x1, float y1, float x2, float y2)
 - (id)addColor:(id)sender
 {
   float 
-    red = (float)random()/(float)MAXLONG, 
-    green = (float)random()/(float)MAXLONG, 
-    blue = (float)random()/(float)MAXLONG;
+    red = (float)random()/(float)LONG_MAX, 
+    green = (float)random()/(float)LONG_MAX, 
+    blue = (float)random()/(float)LONG_MAX;
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   NSColor  *color = [NSColor colorWithCalibratedRed: red
 			     green: green

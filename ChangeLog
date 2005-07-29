@@ -1,3 +1,8 @@
+2005-07-28 21:50 Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* config.h.in: Configuration file header.
+	* configure.ac: Configuration script.
+
 2005-07-28 21:29 Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* InnerSpace.xcode: Added xcode directory.

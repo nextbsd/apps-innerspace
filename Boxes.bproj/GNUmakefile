@@ -43,6 +43,7 @@ BUNDLE_EXTENSION = .InnerSpace
 # The Objective-C source files to be compiled
 Boxes_OBJC_FILES = BoxesView.m
 Boxes_PRINCIPAL_CLASS = BoxesView
+Boxes_STANDARD_INSTALL = no
 
 # The Resource files to be copied into the bundle's resources directory
 # Boxes_RESOURCE_FILES = English.lproj/Boxes.gmodel

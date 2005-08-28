@@ -1,12 +1,4 @@
 #
-#  Test apps makefile for GNUstep X/RAW GUI Backend
-#
-#  Copyright (C) 1997 Free Software Foundation, Inc.
-#
-#  Author: Scott Christley <scottc@net-community.com>
-#  Author: Felipe A. Rodriguez <far@ix.netcom.com>
-#
-#  This file is part of the GNUstep X/RAW GUI Backend.
 #
 #  This library is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Library General Public
@@ -42,6 +34,7 @@ BUNDLE_EXTENSION = .InnerSpace
 # The Objective-C source files to be compiled
 Black_OBJC_FILES = BlackView.m
 Black_PRINCIPAL_CLASS = BlackView
+Black_STANDARD_INSTALL = no
 
 # The Resource files to be copied into the bundle's resources directory
 # Black_RESOURCE_FILES = English.lproj/Black.gmodel

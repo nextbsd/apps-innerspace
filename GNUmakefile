@@ -18,7 +18,6 @@ PACKAGE_NAME=InnerSpace
 include ./Version
 
 APP_NAME=InnerSpace
-GNUSTEP_INSTALLATION_DIR=$(GNUSTEP_LOCAL_ROOT)/
 InnerSpace_APPLICATION_ICON=InnerSpace.tiff
 InnerSpace_MAIN_MODEL_FILE=InnerSpace.gorm
 

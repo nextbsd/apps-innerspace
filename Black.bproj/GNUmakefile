@@ -18,8 +18,6 @@
 #  If not, write to the Free Software Foundation,
 #  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-GNUSTEP_INSTALLATION_DIR = $(GNUSTEP_SYSTEM_ROOT)
-
 # Black_MAIN_MODEL_FILE = Black.gmodel
 Black_PRINCIPAL_CLASS = BlackView
 

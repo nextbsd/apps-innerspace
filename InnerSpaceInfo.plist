@@ -1,12 +1,13 @@
 {
-    ApplicationDescription = "A BackSpace compatible Free Software Screen Saver";
-    ApplicationIcon = "InnerSpace.tiff";
-    ApplicationName = "InnerSpace";
-    ApplicationRelease = "0.4";
-    Authors = ("Gregory John Casamento <greg_casamento@yahoo.com>");
-    Copyright = "Copyright (C) 2003 by Gregory John Casamento";
-    CopyrightDescription = "Released under the GNU General Public License";
-    FullVersionID = 0.4;
+    ApplicationDescription = "No description avaliable!";
+    ApplicationName = InnerSpace;
+    ApplicationRelease = 1;
+    Copyright = "No license specified!";
+    CopyrightDescription = "Released under ...";
+    FullVersionID = 1;
     NOTE = "Automatically generated!";
-    URL = "";
+    NSExecutable = InnerSpace;
+    NSMainNibFile = InnerSpace.gorm;
+    NSPrincipalClass = NSApplication;
+    NSRole = Application;
 }

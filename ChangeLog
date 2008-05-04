@@ -1,3 +1,7 @@
+2008-05-04 08:52-EDT Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* GNUmakefile: Correct issues with makefile.
+
 2007-05-02  Nicola Pero  <nicola.pero@meta-innovation.com>
 
 	* GNUmakefile: Do not set GNUSTEP_INSTALLATION_DIR.

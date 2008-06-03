@@ -35,7 +35,11 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
-NickSpace.bproj/NickSpace.InnerSpace
+NickSpace.bproj/NickSpace.InnerSpace \
+Polyhedra.bproj/Polyhedra.InnerSpace \
+Space2View.bproj/Space2View.InnerSpace \
+SporView.bproj/SporView.InnerSpace
+
 
 InnerSpace_LOCALIZED_RESOURCE_FILES = \
 InnerSpace.gorm 
@@ -70,7 +74,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj NickSpace.bproj
+SUBPROJECTS = Black.bproj Boxes.bproj NickSpace.bproj Polyhedra.bproj Space2View.bproj SporView.bproj
 
 -include GNUmakefile.preamble
 -include GNUmakefile.local

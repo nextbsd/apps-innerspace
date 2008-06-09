@@ -1,3 +1,10 @@
+2008-06-08 20:21-EDT Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* InnerSpaceController.m: Add call to setCanHide: so that the window
+	can't be hidden when it's in the background.
+	* SaverWindow.h
+	* SaverWindow.m: Remove makeOmnipresent method.
+
 2008-06-03 18:03-EDT Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* GNUmakefile

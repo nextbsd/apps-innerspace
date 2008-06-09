@@ -8,5 +8,4 @@
   SEL action;
 }
 - (void) setAction: (SEL)action forTarget: (id) target;
-- (void) makeOmnipresent;
 @end

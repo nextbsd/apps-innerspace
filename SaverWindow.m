@@ -4,14 +4,6 @@
 #include "SaverWindow.h"
 
 @implementation SaverWindow
-
-- (void) makeOmnipresent
-{
-#if defined( GNUSTEP )
-  // [self _setOmnipresent: YES];
-#endif // GNUSTEP
-}
-
 - (void) setAction: (SEL)a forTarget: (id)t
 {
   action = a;

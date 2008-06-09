@@ -200,11 +200,12 @@
   if(desktop)
     {
       [saverWindow setLevel: NSDesktopWindowLevel];
-      [saverWindow makeOmnipresent];
+      [saverWindow setCanHide: NO];
     } 
   else
     {
       [saverWindow setLevel: NSScreenSaverWindowLevel];
+      [saverWindow setCanHide: YES];
     }
 
   // load the view from the currently active module, if

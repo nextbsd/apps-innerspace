@@ -15,6 +15,12 @@
 #define LONG_MAX MAXLONG
 #endif
 
+#ifdef WIN32
+#define random(x) rand(x)
+#define srandom(x) srand(x)
+#define bzero(x, l) memset(x, 0, l)
+#endif
+
 
 #define COLORWIDTH 2
 #define ERASEWIDTH 5

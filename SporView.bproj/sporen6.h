@@ -13,11 +13,12 @@
 
 /* Typendefinitionen */
 
+
 typedef struct
 {
 	int		x,
 			y;
-} COORD;
+} SPCOORD;
 
 typedef struct
 {

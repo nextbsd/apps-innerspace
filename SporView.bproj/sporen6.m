@@ -42,7 +42,7 @@ SPORE	sporen[ REAL_MAX_SPOREN ],
 
 int		ende, freect, statCount, clrCount;
 
-COORD	loctab[ 8 ] = {	{-1,-1}, { 0,-1}, { 1,-1},
+SPCOORD	loctab[ 8 ] = {	{-1,-1}, { 0,-1}, { 1,-1},
 						{-1, 0},          { 1, 0},
 						{-1, 1}, { 0, 1}, { 1, 1}	};
 

@@ -19,6 +19,25 @@ NSSize sizeArray[] = {{1,1},{2,1},{2,2},{3,2},{3,3},{4,3},{4,4}};
 
 extern float randBetween(float a, float b);
 
+#ifdef WIN32
+#define RAND ((float)rand()/(float)RAND_MAX)
+
+float randBetween(float lower, float upper)
+{
+  float result = 0.0;
+
+  if (lower > upper)
+    {
+      float temp = 0.0;
+      temp = lower; lower = upper; upper = temp;
+    }
+  result = ((upper - lower) * RAND + lower);
+  printf("upper = %f, lower = %f, result = %f\n",upper,lower,result);
+  return result;
+}
+#endif
+
+
 //takes theta and distance and stuffs it into x &y for *p
 - convertToXY:(STAR *)p
 {

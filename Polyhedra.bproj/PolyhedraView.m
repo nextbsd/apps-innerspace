@@ -24,7 +24,13 @@
 
 #include <stdlib.h>
 
-/*
+#ifdef WIN32
+#define MAXPATHLEN MAX_PATH
+#define random(x) rand(x)
+#endif
+
+
+#ifdef WIN32
 #define RAND ((float)rand()/(float)RAND_MAX)
 
 float randBetween(float lower, float upper)
@@ -40,7 +46,7 @@ float randBetween(float lower, float upper)
   printf("upper = %f, lower = %f, result = %f\n",upper,lower,result);
   return result;
 }
-*/
+#endif
 
 // Number of vertices of the polyhedron
 static int theNumVertices[NUM_POLYHEDRA] =

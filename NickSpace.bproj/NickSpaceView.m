@@ -3,6 +3,7 @@
 #import <values.h>
 #import <time.h>
 #import <limits.h>
+#import <stdlib.h>
 
 /*
  * the file originally used MAXINT and MAXLONG
@@ -483,7 +484,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   NSUserDefaults *userDef = [NSUserDefaults standardUserDefaults];
   int i;
   
-  srandom(time(0));
+  srand(time(0));
   
   if((self = [super initWithFrame: frameRect]) != nil)
     {
@@ -530,9 +531,10 @@ void doSeg(float x1, float y1, float x2, float y2)
 	  // randomize an initial set of colors:
 	  for (i=0;i<numColors;i++) 
 	    {
-	      float red = (float)random()/(float)LONG_MAX;
-	      float green = (float)random()/(float)LONG_MAX;
-	      float blue = (float)random()/(float)LONG_MAX;
+	      float red = (float)rand()/(float)MAXINT;
+	      float green = (float)rand()/(float)MAXINT;
+	      float blue = (float)rand()/(float)MAXINT;
+	      NSLog(@"Colors %f, %f, %f ", red, green, blue);
 	      NSColor *color = [NSColor colorWithCalibratedRed: red
 					green: green
 					blue: blue

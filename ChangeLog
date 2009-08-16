@@ -1,3 +1,7 @@
+2009-08-16 14:42-EDT Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* Polyhedra.bproj/PolyhedraView.m: Properly seed random function.
+
 2009-08-16 14:37-EDT Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* NickSpace.bproj/NickSpaceView.m: Fix the random function.

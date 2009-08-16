@@ -853,6 +853,7 @@ inline float distance(float xcrd, float ycrd, float zcrd)
 {
   [super initWithFrame: frameRect];	
   [self useNewFrame:frameRect];
+  srand(time(0));
   return self;
 }
 

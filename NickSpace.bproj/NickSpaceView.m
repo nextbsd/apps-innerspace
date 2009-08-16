@@ -534,7 +534,6 @@ void doSeg(float x1, float y1, float x2, float y2)
 	      float red = (float)rand()/(float)MAXINT;
 	      float green = (float)rand()/(float)MAXINT;
 	      float blue = (float)rand()/(float)MAXINT;
-	      NSLog(@"Colors %f, %f, %f ", red, green, blue);
 	      NSColor *color = [NSColor colorWithCalibratedRed: red
 					green: green
 					blue: blue

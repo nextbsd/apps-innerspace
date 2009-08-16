@@ -26,14 +26,10 @@
 #  If not, write to the Free Software Foundation,
 #  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-GNUSTEP_INSTALLATION_DIR = $(GNUSTEP_SYSTEM_ROOT)
-
 Polyhedra_MAIN_MODEL_FILE = Polyhedra.gorm
 Polyhedra_PRINCIPAL_CLASS = PolyhedraView
 
 include $(GNUSTEP_MAKEFILES)/common.make
-
-#  include ../../Version
 
 # The application to be compiled
 BUNDLE_NAME = Polyhedra
@@ -45,6 +41,7 @@ Polyhedra_PRINCIPAL_CLASS = PolyhedraView
 
 # The Resource files to be copied into the bundle's resources directory
 Polyhedra_RESOURCE_FILES = Polyhedra.gorm
+Polyhedra_STANDARD_INSTALL=no
 
 -include GNUmakefile.preamble
 

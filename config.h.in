@@ -1,3 +1,0 @@
-/* window omnipresence */
-
-#undef HAVE_OMNIPRESENT

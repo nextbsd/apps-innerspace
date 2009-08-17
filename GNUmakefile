@@ -15,8 +15,6 @@ include $(GNUSTEP_MAKEFILES)/common.make
 
 PACKAGE_NAME=InnerSpace
 
-include ./Version
-
 APP_NAME=InnerSpace
 InnerSpace_APPLICATION_ICON=InnerSpace.tiff
 InnerSpace_MAIN_MODEL_FILE=InnerSpace.gorm

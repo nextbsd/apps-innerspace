@@ -1,3 +1,8 @@
+2009-08-17 11:57-EDT Gregory John Casamento <greg_casamento@yahoo.com>
+
+	* GNUmakefile: Add new module ItJustStopped.
+	* ItJustStopped.bproj: Add all files here.
+
 2009-08-16 14:42-EDT Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* Polyhedra.bproj/PolyhedraView.m: Properly seed random function.

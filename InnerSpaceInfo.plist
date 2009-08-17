@@ -1,9 +1,9 @@
 {
-    ApplicationDescription = "No description avaliable!";
+    ApplicationDescription = "A BackSpace clone for GNUstep/Mac OS X.";
     ApplicationName = InnerSpace;
     ApplicationRelease = 1;
-    Copyright = "No license specified!";
-    CopyrightDescription = "Released under ...";
+    Copyright = "Gregory John Casamento";
+    CopyrightDescription = "Released under LGPLv2.1 or later";
     FullVersionID = 1;
     NOTE = "Automatically generated!";
     NSExecutable = InnerSpace;

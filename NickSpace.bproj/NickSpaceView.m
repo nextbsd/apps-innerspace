@@ -531,9 +531,9 @@ void doSeg(float x1, float y1, float x2, float y2)
 	  // randomize an initial set of colors:
 	  for (i=0;i<numColors;i++) 
 	    {
-	      float red = (float)rand()/(float)MAXINT;
-	      float green = (float)rand()/(float)MAXINT;
-	      float blue = (float)rand()/(float)MAXINT;
+	      float red = (float)rand()/(float)INT_MAX;
+	      float green = (float)rand()/(float)INT_MAX;
+	      float blue = (float)rand()/(float)INT_MAX;
 	      NSColor *color = [NSColor colorWithCalibratedRed: red
 					green: green
 					blue: blue

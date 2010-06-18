@@ -43,10 +43,7 @@
 
 - (void) doSaver: (id)sender
 {
-  NSDebugLog(@"Called");
-  // [self createSaverWindow: NO];
-  // [self startTimer];
-  [saverWindow setLevel: NSScreenSaverWindowLevel];
+  [self startSaver];
 }
 
 - (void) doSaverInBackground: (id)sender
@@ -160,6 +157,8 @@
 {
   NSRect frame = [[NSScreen mainScreen] frame];
   int store = NSBackingStoreRetained;
+  
+  [self destroySaverWindow];
 
   // dertermine backing type...
   NS_DURING
@@ -223,33 +222,37 @@
       NS_ENDHANDLER
     }
   
+  [self startTimer];
   [saverWindow makeKeyAndOrderFront: self];
 }
 
 - (void) destroySaverWindow
 {
+  [self stopTimer];
   [saverWindow close];
   saverWindow = nil;
 }
 
+- (void) startSaver
+{
+  [self destroySaverWindow];
+  [self createSaverWindow: NO];
+  [self startTimer];
+  [saverWindow setLevel: NSScreenSaverWindowLevel];
+}
+
 - (void) stopSaver
 {
-  NSDebugLog(@"%@",[inBackground stringValue]);
   [self destroySaverWindow];
   [self stopTimer];
-  NSDebugLog(@"stopping");
 }
 
 - (void) stopAndStartSaver
 {
-  /*
-  NSDebugLog(@"%@",[inBackground stringValue]);
-  [self destroySaverWindow];
-  [self stopTimer];
-  NSDebugLog(@"stopping");
+  [self stopSaver];
   [self doSaverInBackground: self];
-  */
   [saverWindow setLevel: NSDesktopWindowLevel];
+  [self startTimer];
 }
 
 // timer managment

@@ -10,7 +10,7 @@
   target = t;
 }
 
-- (void) keyDown: (NSEvent *)theEvent
+- (void) _triggerAction
 {
   if([self level] != NSDesktopWindowLevel)
     {
@@ -18,12 +18,19 @@
     }
 }
 
+- (void) keyDown: (NSEvent *)theEvent
+{
+  [self _triggerAction];
+}
+
+- (void) mouseMoved: (NSEvent *)theEvent
+{
+  [self _triggerAction];
+}
+
 - (void) mouseUp: (NSEvent *)theEvent
 {
-  if([self level] != NSDesktopWindowLevel)
-    {
-      [NSApp sendAction: action to: target from: self];
-    }
+  [self _triggerAction];
 }
 
 - (BOOL) canBecomeKeyWindow

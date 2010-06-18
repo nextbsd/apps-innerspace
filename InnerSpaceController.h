@@ -38,11 +38,13 @@
 - (void) saver: (id)sender;
 - (void) doSaver: (id)sender;
 - (void) doSaverInBackground: (id)sender;
+- (void) startSaver; // : (id)sender;
 - (void) stopSaver; // : (id)sender;
 - (void) stopAndStartSaver; // : (id)sender;
 
 // internal methods
 - (NSMutableDictionary *) modules;
+- (void) destroySaverWindow;
 - (void) createSaverWindow: (BOOL)desktop;
 - (void) startTimer;
 - (void) stopTimer;

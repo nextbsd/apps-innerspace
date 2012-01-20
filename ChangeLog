@@ -1,3 +1,8 @@
+1012-01-20 13:08:18-CET  Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
+	*  NickSpace.bproj/NickSpaceView.m 
+           * do not include values.h anymore
+	   * [image free] -> [image release]
+
 2009-08-17 11:57-EDT Gregory John Casamento <greg_casamento@yahoo.com>
 
 	* GNUmakefile: Add new module ItJustStopped.

@@ -1,6 +1,5 @@
 #import "NickSpaceView.h"
 #import <AppKit/AppKit.h>
-#import <values.h>
 #import <time.h>
 #import <limits.h>
 #import <stdlib.h>
@@ -342,7 +341,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 	  [self newSize:YES];
 	  if (image) 
 	    {
-	      [image free];
+	      [image release];
 	      image = nil;
 	    }
 	}

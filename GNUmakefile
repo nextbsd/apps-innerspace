@@ -16,7 +16,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 PACKAGE_NAME=InnerSpace
 
 APP_NAME=InnerSpace
-InnerSpace_APPLICATION_ICON=InnerSpace.tiff
+InnerSpace_APPLICATION_ICON=InnerSpace_Icon.icns
 InnerSpace_MAIN_MODEL_FILE=InnerSpace.gorm
 
 #
@@ -31,6 +31,7 @@ ADDITIONAL_GUI_LIBS +=
 
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
+InnerSpace_Icon.icns \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace \

@@ -325,9 +325,9 @@ static int faceColour[NUM_POLYHEDRA][MAX_NUM_FACES] =
 @implementation PolyhedraView
 
 // Distance between two points.  Inlined for efficiency.
-inline float distance(float xcrd, float ycrd, float zcrd);
+float distance(float xcrd, float ycrd, float zcrd);
 
-inline float distance(float xcrd, float ycrd, float zcrd)
+float distance(float xcrd, float ycrd, float zcrd)
 {
   return sqrt(xcrd * xcrd + ycrd * ycrd + zcrd * zcrd);
 }

@@ -852,6 +852,7 @@ float distance(float xcrd, float ycrd, float zcrd)
 - initWithFrame:(NSRect)frameRect
 {
   [super initWithFrame: frameRect];	
+  selectedIndex = DODECAHEDRON + 1;
   [self useNewFrame:frameRect];
   srand(time(0));
   return self;

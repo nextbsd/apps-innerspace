@@ -563,6 +563,20 @@ void doSeg(float x1, float y1, float x2, float y2)
   return self;
 }
 
+- (void)dealloc
+{
+  if (image)
+    {
+      [image release];
+      image = nil;
+    }
+  [colors release];
+  free(horEdges);
+  free(vertEdges);
+  free(trails);
+  [super dealloc];
+}
+
 - (void) setFrame: (NSRect)frame
 {
   [super setFrame: frame];

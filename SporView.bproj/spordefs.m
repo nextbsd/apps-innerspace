@@ -13,6 +13,7 @@
 
 /* Bibliotheken */
 
+#include <stdlib.h>
 #include "spordefs.h"					/* prototypen ( SP ) */
 
 #ifdef ATARI

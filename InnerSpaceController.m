@@ -6,6 +6,7 @@
 #include "InnerSpaceController.h"
 
 #define TIME 0.10
+#define MINIMUM_ANIMATION_DELAY 0.10
 
 @implementation InnerSpaceController
 
@@ -19,6 +20,7 @@
     {
       module = [[modules allKeys] objectAtIndex: row];
       [defaults setObject: module forKey: @"currentModule"];
+      ASSIGN(currentModuleName, module);
       [self loadModule: module];
     }
 
@@ -66,19 +68,23 @@
 
 - (void) loadDefaults
 {
-  NSMutableDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
-						 @"Black",@"currentModule",nil];
+  NSDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
+				      @"Black",@"currentModule",nil];
   int row = 0;
-  float runSpeed = 0.10;
+  float runSpeed = MINIMUM_ANIMATION_DELAY;
 
-  [defaults setFloat: runSpeed forKey: @"runSpeed"];
   defaults = [NSUserDefaults standardUserDefaults];
   [defaults registerDefaults: appDefs];
   
   runSpeed = [defaults floatForKey: @"runSpeed"];
+  if(runSpeed < MINIMUM_ANIMATION_DELAY)
+    {
+      runSpeed = MINIMUM_ANIMATION_DELAY;
+      [defaults setFloat: runSpeed forKey: @"runSpeed"];
+    }
   [speedSlider setFloatValue: runSpeed];
 
-  currentModuleName = [defaults stringForKey: @"currentModule"];
+  ASSIGN(currentModuleName, [defaults stringForKey: @"currentModule"]);
   row = [[modules allKeys] indexOfObject: currentModuleName];  
   if(row < [[modules allKeys] count])
     {
@@ -139,12 +145,13 @@
 
 - (void) dealloc
 {
-  RELEASE(saverWindow);
-  RELEASE(timer);
+  [self destroySaverWindow];
+  [self stopTimer];
   RELEASE(currentModule);
   RELEASE(modules);
   RELEASE(currentModuleName);
   RELEASE(emptyView);
+  [super dealloc];
 }
 
 - (void) applicationDidFinishLaunching: (NSNotification *)notification
@@ -179,6 +186,7 @@
 				     styleMask: NSBorderlessWindowMask
 				     backing: store
 				     defer: NO];
+  [saverWindow setReleasedWhenClosed: NO];
 
   // set some attributes...
   [saverWindow setAction: @selector(stopAndStartSaver) forTarget: self];
@@ -229,22 +237,24 @@
 - (void) destroySaverWindow
 {
   [self stopTimer];
-  [saverWindow close];
-  saverWindow = nil;
+  if(saverWindow != nil)
+    {
+      [saverWindow close];
+      RELEASE(saverWindow);
+      saverWindow = nil;
+    }
 }
 
 - (void) startSaver
 {
   [self destroySaverWindow];
   [self createSaverWindow: NO];
-  [self startTimer];
   [saverWindow setLevel: NSScreenSaverWindowLevel];
 }
 
 - (void) stopSaver
 {
   [self destroySaverWindow];
-  [self stopTimer];
 }
 
 - (void) stopAndStartSaver
@@ -252,7 +262,6 @@
   [self stopSaver];
   [self doSaverInBackground: self];
   [saverWindow setLevel: NSDesktopWindowLevel];
-  [self startTimer];
 }
 
 // timer managment
@@ -260,6 +269,13 @@
 {
   NSTimeInterval runSpeed = [speedSlider floatValue];
   NSTimeInterval time = runSpeed;
+
+  [self stopTimer];
+
+  if(currentModule == nil || saverWindow == nil)
+    {
+      return;
+    }
 
   NS_DURING
     {
@@ -275,6 +291,11 @@
       time = runSpeed;
     }
   NS_ENDHANDLER
+
+  if(time < MINIMUM_ANIMATION_DELAY)
+    {
+      time = MINIMUM_ANIMATION_DELAY;
+    }
     
   if(![currentModule respondsToSelector: @selector(isBoringScreenSaver)])
     {
@@ -303,7 +324,10 @@
 	NSLog(@"EXCEPTION: %@",localException);
       NS_ENDHANDLER      
     }
-  RETAIN(timer);
+  if(timer != nil)
+    {
+      RETAIN(timer);
+    }
 }
 
 - (void) stopTimer
@@ -351,14 +375,17 @@
 	// NSLog(@"inspectorView %@",inspectorView);
 	[(NSBox *)controlsView setBorderType: NSGrooveBorder];
 	[(NSBox *)controlsView setContentView: inspectorView];
+	RELEASE(inspectorView);
 	if([moduleView respondsToSelector: @selector(inspectorInstalled)])
 	  {
 	    NSLog(@"installed");
 	    [moduleView inspectorInstalled];
 	  }
       }
-    [self createSaverWindow: YES];
-    [self startTimer];
+    if(moduleView != nil)
+      {
+	[self createSaverWindow: YES];
+      }
   NS_HANDLER
     NSLog(@"EXCEPTION: %@",localException);
   NS_ENDHANDLER
@@ -424,6 +451,7 @@
 	}
       
       ASSIGN(currentModule, (ModuleView *)newModule);
+      RELEASE(newModule);
       [self _startModule: currentModule];
       [controlsView display];
     }

@@ -26,7 +26,6 @@
   float x = 0, y = 0, w = 0, h = 0;
   float r = 0, g = 0, b = 0, a = 0;
   NSRect rect; 
-  NSGraphicsContext *ctxt = GSCurrentContext();
   NSRect frame = [[NSScreen mainScreen] frame];
   
   // size and position...

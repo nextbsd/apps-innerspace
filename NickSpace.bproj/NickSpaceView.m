@@ -57,7 +57,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 
 - (NSString *)stringRepresentation
 {
-    float r, g, b, a;
+    CGFloat r, g, b, a;
     [[self colorUsingColorSpaceName:NSCalibratedRGBColorSpace] getRed:&r green:&g blue:&b alpha:&a];
     return [NSString stringWithFormat:@"%f %f %f %f",r,g,b,a];
 }
@@ -478,7 +478,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 
 -(id)initWithFrame:(NSRect)frameRect
 {
-  NSString *defaults = [NSString stringWithString: @"{\"spacing\" = \"\"; \"tcRatio\" = \"\"; \"tlRatio\" = \"\";}"];
+  NSString *defaults = @"{\"spacing\" = \"\"; \"tcRatio\" = \"\"; \"tlRatio\" = \"\";}";
   NSDictionary *defDict = [defaults propertyList];
   NSUserDefaults *userDef = [NSUserDefaults standardUserDefaults];
   int i;
@@ -541,6 +541,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 	    }
 	  
 	  [userDef setObject: colors forKey: @"colors"];
+	  [userDef synchronize];
 	} 
       else 
 	{
@@ -720,6 +721,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   NSColor *color = [sender color];
   [colors replaceObjectAtIndex: currColor withObject: [color stringRepresentation]];
   [[NSUserDefaults standardUserDefaults] setObject: colors forKey: @"colors"];
+  [[NSUserDefaults standardUserDefaults] synchronize];
   return self;
 }
 
@@ -754,6 +756,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   
   [userDefs setObject: colors forKey: @"colors"];
   [userDefs setInteger: numColors forKey: @"numColors"];
+  [userDefs synchronize];
   [colorWell setColor: color];    
   
   [numColorsField setStringValue: [NSString stringWithFormat: @"%d/%d", currColor+1, numColors]];
@@ -774,6 +777,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 
   numColors--;
   [userDefs setInteger: numColors forKey: @"numColors"];  
+  [userDefs synchronize];
 
   currColor %= numColors;  
   cColor = [[colors objectAtIndex: currColor] colorValue];
@@ -789,6 +793,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   spacing = [sender intValue];
   [userDefs setInteger: spacing forKey: @"spacing"];  
+  [userDefs synchronize];
   [self newSize:YES];
   return self;
 }
@@ -798,6 +803,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   tcRatio = [sender floatValue];
   [userDefs setFloat: tcRatio forKey: @"tcRatio"];  
+  [userDefs synchronize];
   [self newSize:YES];
   return self;
 }
@@ -807,6 +813,7 @@ void doSeg(float x1, float y1, float x2, float y2)
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   tlRatio = [sender floatValue];
   [userDefs setFloat: tlRatio forKey: @"tlRatio"];  
+  [userDefs synchronize];
   [self newSize:YES];
   return self;
 }

@@ -146,16 +146,13 @@ float randBetween(float lower, float upper)
   return self;
 }
 
-- setFrame:(NSRect)rect
+- (void) setFrame:(NSRect)rect
 {
-  NSRect bounds = [self bounds];
-
   // if (bounds.size.width == width && bounds.size.height == height) return self;
   
   [super setFrame: rect];
   [self setRadius];
   nstars = 0;
-  return self;
 }
 
 // only call addStar if there is room in the stars array!

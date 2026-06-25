@@ -515,18 +515,20 @@ float distance(float xcrd, float ycrd, float zcrd)
       // Let the wraps do the drawing, depending on the number of vertices in
       // the face, and whether or not we should fill the face.
       if (verticesPerFace == 3)
-	if (colours[k] != TRANSPARENT)
-	  {
-	    //	    NSLog(@"%f %f %f %f %f %f %f %f %f", thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
-	    // thisFace[2].x, thisFace[2].y, r[k],g[k],b[k]);
-	    colourTriangle(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
-			   thisFace[2].x, thisFace[2].y, r[k],g[k],b[k]);
-	  }
-	else
-	  outlineTriangle(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
-			  thisFace[2].x, thisFace[2].y);
-      else
-	if (verticesPerFace == 4)
+	{
+	  if (colours[k] != TRANSPARENT)
+	    {
+	      //	    NSLog(@"%f %f %f %f %f %f %f %f %f", thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
+	      // thisFace[2].x, thisFace[2].y, r[k],g[k],b[k]);
+	      colourTriangle(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
+			     thisFace[2].x, thisFace[2].y, r[k],g[k],b[k]);
+	    }
+	  else
+	    outlineTriangle(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
+			    thisFace[2].x, thisFace[2].y);
+	}
+      else if (verticesPerFace == 4)
+	{
 	  if (colours[k] != TRANSPARENT)
 	    colourSquare(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
 			 thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y,
@@ -534,16 +536,18 @@ float distance(float xcrd, float ycrd, float zcrd)
 	  else
 	    outlineSquare(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
 			  thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y);
-	else
-	  if (verticesPerFace == 5)
-	    if (colours[k] != TRANSPARENT)
-	      colourPentagon(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
-			     thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y,
-			     thisFace[4].x, thisFace[4].y, r[k],g[k],b[k]);
-	    else
-	      outlinePentagon(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
-			      thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y,
-			      thisFace[4].x, thisFace[4].y);
+	}
+      else if (verticesPerFace == 5)
+	{
+	  if (colours[k] != TRANSPARENT)
+	    colourPentagon(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
+			   thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y,
+			   thisFace[4].x, thisFace[4].y, r[k],g[k],b[k]);
+	  else
+	    outlinePentagon(thisFace[0].x, thisFace[0].y, thisFace[1].x, thisFace[1].y,
+			    thisFace[2].x, thisFace[2].y, thisFace[3].x, thisFace[3].y,
+			    thisFace[4].x, thisFace[4].y);
+	}
       
       drawn[k] = YES;
     }
@@ -961,8 +965,6 @@ float distance(float xcrd, float ycrd, float zcrd)
 
 - (id)inspector: (id)sender
 {
-  char buf[MAXPATHLEN];
-  
   // NSLog(@"called");
   if (!inspectorPanel)
     {

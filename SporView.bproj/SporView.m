@@ -87,7 +87,7 @@
   return( aValue );
 }
 
-- setFrame: (NSRect) frame
+- (void) setFrame: (NSRect) frame
 {
 #ifdef DEBUG
   fprintf( stderr, "sizeTo::\n" );

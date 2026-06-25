@@ -6,7 +6,7 @@
 #include "InnerSpaceController.h"
 
 #define TIME 0.10
-#define MINIMUM_ANIMATION_DELAY 0.10
+#define MINIMUM_ANIMATION_DELAY 0.01
 
 @implementation InnerSpaceController
 
@@ -20,6 +20,7 @@
     {
       module = [[modules allKeys] objectAtIndex: row];
       [defaults setObject: module forKey: @"currentModule"];
+      [defaults synchronize];
       ASSIGN(currentModuleName, module);
       [self loadModule: module];
     }
@@ -63,15 +64,27 @@
 
 - (void) setSpeed: (id)sender
 {
+  float runSpeed = [sender floatValue];
+
+  if(runSpeed < MINIMUM_ANIMATION_DELAY)
+    {
+      runSpeed = MINIMUM_ANIMATION_DELAY;
+      [sender setFloatValue: runSpeed];
+    }
+
+  [defaults setFloat: runSpeed forKey: @"runSpeed"];
+  [defaults synchronize];
   [self resetTimer];
 }
 
 - (void) loadDefaults
 {
   NSDictionary *appDefs = [NSDictionary dictionaryWithObjectsAndKeys:
-				      @"Black",@"currentModule",nil];
+				      @"Black", @"currentModule",
+				      [NSNumber numberWithFloat: TIME], @"runSpeed",
+				      nil];
   int row = 0;
-  float runSpeed = MINIMUM_ANIMATION_DELAY;
+  float runSpeed = TIME;
 
   defaults = [NSUserDefaults standardUserDefaults];
   [defaults registerDefaults: appDefs];
@@ -81,6 +94,7 @@
     {
       runSpeed = MINIMUM_ANIMATION_DELAY;
       [defaults setFloat: runSpeed forKey: @"runSpeed"];
+      [defaults synchronize];
     }
   [speedSlider setFloatValue: runSpeed];
 

@@ -29,9 +29,8 @@ typedef struct STAR {
 - convertToXY:(STAR *)p;
 - oneStep;
 - drawRect:(NSRect)rects;
-- setFrame: (NSRect)rect;
+- (void)setFrame: (NSRect)rect;
 - addStar;
 - replaceStarAt:(int)index;
 - setRadius;
 @end
-

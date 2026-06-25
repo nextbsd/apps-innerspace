@@ -1,14 +1,19 @@
-#include <AppKit/AppKit.h>
+#import <AppKit/AppKit.h>
+#import <Foundation/Foundation.h>
 
 #if defined(_WIN32) || defined(WIN32)
+
 #include <windows.h>
+
 #else
+
 #include <errno.h>
 #include <sys/resource.h>
 #include <string.h>
+
 #endif
 
-#define APP_NAME @"GNUstep"
+#define APP_NAME @"InnerSpace"
 
 static void
 InnerSpaceSetLowPriority(void)

@@ -148,9 +148,31 @@
   return self;
 }
 
-- drawRect: (NSRect)rect 
+- initializeSimulationForBounds:(NSRect)bounds
 {
   int    height,width;
+
+  height = ( int )bounds.size.height;
+  width = ( int )bounds.size.width;
+  set_screen_size( width, height, width );
+  [self getStartParameter];
+  [self showStartParameter];
+  
+#ifdef DEBUG
+  fprintf( stderr, "set: %d %d %d %d %d %d\n", pop, sPop, 
+	   spread, kind, cloud, enemy );
+#endif
+  set_simulation_parameter( pop, sPop, spread, kind, cloud, enemy );
+  init_sim();
+  
+  initDone = YES;
+
+  return self;
+}
+
+- (void)drawRect: (NSRect)rect 
+{
+  NSRect bounds;
   
 #ifdef DEBUG
   fprintf( stderr, "drawSelf::\n" );
@@ -158,37 +180,26 @@
   
   if( initDone == NO )
     {
-      height = ( int )rect.size.height;
-      width = ( int )rect.size.width;
-      set_screen_size( width, height, width );
-      [self getStartParameter];
-      [self showStartParameter];
-      
-#ifdef DEBUG
-      fprintf( stderr, "set: %d %d %d %d %d %d\n", pop, sPop, 
-	       spread, kind, cloud, enemy );
-#endif
-      set_simulation_parameter( pop, sPop, spread, kind, cloud, enemy );
-      init_sim();
-      
-      initDone = YES;
+      bounds = [self bounds];
+      [self initializeSimulationForBounds: bounds];
     }
   else
     {
       PSsetgray( 0 );
       NSRectFill( rect );
     }
-  
-  return self;
 }
 
-- oneStep
+- (void)oneStep
 {
+  if( initDone == NO )
+    {
+      [self initializeSimulationForBounds: [self bounds]];
+    }
   cDoSimulation();
-  return self;
 }
 
-- (id)inspector: (id)sender
+- (NSView *)inspector: (id)sender
 {
   if( !inspector )
     {
@@ -200,17 +211,15 @@
   return inspector;
 }
 
-- inspectorInstalled
+- (void)inspectorInstalled
 {
   inspectorPresent = YES;	
   [ self showStartParameter ];
-  return self;
 }
 
-- inspectorWillBeRemoved
+- (void)inspectorWillBeRemoved
 {
   [ sporWindow close ];
-  return self;
 }
 
 @end

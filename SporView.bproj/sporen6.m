@@ -98,12 +98,25 @@ void set_screen_size( int mapx, int mapy, int pixelx )
 {
 
 	MAPMX = mapx / 4;
-	DIAGHT = mapy / 10;		
+	if( MAPMX < 1 )
+		MAPMX = 1;
+	if( MAPMX > REALMAPMX )
+		MAPMX = REALMAPMX;
+
+	DIAGHT = mapy / 10;
+	if( DIAGHT < 1 )
+		DIAGHT = 1;
 	MAPMY = ( mapy - DIAGHT ) / 4;
+	if( MAPMY < 1 )
+		MAPMY = 1;
+	if( MAPMY > REALMAPMY )
+		MAPMY = REALMAPMY;
 #ifdef DEBUG
 	fprintf( stderr, "mapy:%d DIAGHT:%d\n", mapy, DIAGHT );
 #endif
 	SCRMX	= pixelx;
+	if( SCRMX < 1 )
+		SCRMX = 1;
 
 	return;
 }
@@ -258,6 +271,9 @@ void Cls(void)
 
 int zufall(int wid)
 {
+	if( wid <= 0 )
+		return 0;
+
 	return rand() % wid;
 }
 
@@ -352,6 +368,18 @@ SPORE *newSpore(void)
 void setSpore(int x, int y, int r, int t, int p)
 {
 	SPORE *spore;
+
+	if( MAPMX <= 0 || MAPMY <= 0 )
+		return;
+
+	while( x < 0 )
+		x += MAPMX;
+	while( y < 0 )
+		y += MAPMY;
+	if( x >= MAPMX )
+		x %= MAPMX;
+	if( y >= MAPMY )
+		y %= MAPMY;
 
 	spore = newSpore();
 	if (spore != NOENTRY)

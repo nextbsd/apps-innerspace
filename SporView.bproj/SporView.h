@@ -24,14 +24,16 @@
 
 }
 
-- oneStep;
+- (void) oneStep;
 - (id) initWithFrame:( NSRect )frameRect;
-- (id) drawRect:(NSRect)rects;
+- (void) drawRect:(NSRect)rects;
 /// - sizeToFit:(NSSize)size;
 
-- (id)inspectorInstalled;
-- (id)inspectorWillBeRemoved;
-- inspector: sender;
+- initializeSimulationForBounds:(NSRect)bounds;
+
+- (void)inspectorInstalled;
+- (void)inspectorWillBeRemoved;
+- (NSView *)inspector: sender;
 
 - toggleKind:sender;
 - toggleEnemy:sender;

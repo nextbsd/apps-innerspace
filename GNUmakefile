@@ -49,6 +49,7 @@ ADDITIONAL_GUI_LIBS +=
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
 InnerSpace_Icon.icns \
+BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace \
@@ -93,6 +94,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 #
 
 SUBPROJECTS = Black.bproj Boxes.bproj \
+        BouncyClock.bproj \
         NickSpace.bproj Polyhedra.bproj \
 	Space2View.bproj SporView.bproj \
 	Qix.bproj ItJustStopped.bproj

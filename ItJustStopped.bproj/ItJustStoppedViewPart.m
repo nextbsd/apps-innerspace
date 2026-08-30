@@ -60,11 +60,10 @@
   return self;
 }
 
-- setFrame: (NSRect)frame
+- (void) setFrame: (NSRect)frame
 {
   [super setFrame: frame];
   [self newSize];
-  return self;
 }
 
 - newSize

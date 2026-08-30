@@ -14,6 +14,7 @@
   NSString *timeString;
   NSDictionary *textAttributes;
   NSDictionary *numberAttributes;
+  NSDictionary *indicatorAttributes;
   BOOL analogClock;
   BOOL showNumbers;
   BOOL largeClock;
@@ -37,6 +38,9 @@
 - (void)drawUndistortedClock;
 - (void)drawAnalogClock;
 - (void)drawDigitalClock;
+- (void)drawAmPmIndicator;
+- (void)drawAmPmIndicatorAtPoint:(NSPoint)indicatorPoint
+		   withAttributes:(NSDictionary *)attributes;
 - (id)setClockMode:(id)sender;
 - (id)setShowNumbers:(id)sender;
 - (id)setLargeClock:(id)sender;

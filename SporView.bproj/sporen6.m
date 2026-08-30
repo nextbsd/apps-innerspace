@@ -279,12 +279,13 @@ int zufall(int wid)
 
 void keyTest(void)
 {
-/*
+#if 0
 	long k;
 
-	k = tosKeyTest();						/* Abfragen, ohne warten */
-/*
-	if ( (int) k == 27 )	ende = 1;		/* ESC = Abbruch */
+	k = tosKeyTest();						// Abfragen, ohne warten
+
+	if ( (int) k == 27 )	ende = 1;		// ESC = Abbruch
+#endif
 }
 
 

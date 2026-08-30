@@ -14,6 +14,9 @@
 #define LargeDigitalFontSize 96.0
 #define NormalNumberFontSize 14.0
 #define LargeNumberFontSize 22.0
+#define NormalIndicatorFontSize 18.0
+#define LargeIndicatorFontSize 28.0
+#define IndicatorGap 4.0
 #define BubbleSpringStiffness 0.42
 #define BubbleSpringDamping 0.68
 #define BubbleBouncePeriodMinimum 1.0
@@ -29,6 +32,7 @@
       timeString = nil;
       textAttributes = nil;
       numberAttributes = nil;
+      indicatorAttributes = nil;
       inspectorView = nil;
       clockModeMatrix = nil;
       showNumbersButton = nil;
@@ -56,6 +60,7 @@
   RELEASE(timeString);
   RELEASE(textAttributes);
   RELEASE(numberAttributes);
+  RELEASE(indicatorAttributes);
   RELEASE(inspectorView);
   RELEASE(clockModeMatrix);
   RELEASE(showNumbersButton);
@@ -116,8 +121,11 @@
 			       largeClock ? LargeDigitalFontSize : NormalDigitalFontSize];
   NSFont *numberFont = [NSFont boldSystemFontOfSize:
 				 largeClock ? LargeNumberFontSize : NormalNumberFontSize];
+  NSFont *indicatorFont = [NSFont boldSystemFontOfSize:
+				    largeClock ? LargeIndicatorFontSize : NormalIndicatorFontSize];
   NSDictionary *newTextAttributes;
   NSDictionary *newNumberAttributes;
+  NSDictionary *newIndicatorAttributes;
 
   newTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
 				       textFont, NSFontAttributeName,
@@ -125,11 +133,16 @@
 				       nil];
   newNumberAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
 					 numberFont, NSFontAttributeName,
-					 [NSColor whiteColor], NSForegroundColorAttributeName,
+					 [NSColor blackColor], NSForegroundColorAttributeName,
 					 nil];
+  newIndicatorAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+					    indicatorFont, NSFontAttributeName,
+					    [NSColor whiteColor], NSForegroundColorAttributeName,
+					    nil];
 
   ASSIGN(textAttributes, newTextAttributes);
   ASSIGN(numberAttributes, newNumberAttributes);
+  ASSIGN(indicatorAttributes, newIndicatorAttributes);
 }
 
 - (BOOL)useBufferedWindow
@@ -180,6 +193,9 @@
 
 - (void)updateClockSize
 {
+  NSSize indicatorSize = [@"PM" sizeWithAttributes: indicatorAttributes];
+  float indicatorHeight = indicatorSize.height + IndicatorGap;
+
   if(analogClock)
     {
       float diameter = largeClock ? LargeAnalogClockDiameter : NormalAnalogClockDiameter;
@@ -188,7 +204,10 @@
     }
   else
     {
-      clockSize = [timeString sizeWithAttributes: textAttributes];
+      NSSize timeSize = [timeString sizeWithAttributes: textAttributes];
+
+      clockSize = NSMakeSize(MAX(timeSize.width, indicatorSize.width),
+			     timeSize.height + indicatorHeight);
     }
 }
 
@@ -276,30 +295,41 @@
 
 - (void)drawDigitalClock
 {
-  [timeString drawAtPoint: position withAttributes: textAttributes];
+  NSSize timeSize = [timeString sizeWithAttributes: textAttributes];
+  NSSize indicatorSize = [@"PM" sizeWithAttributes: indicatorAttributes];
+
+  [timeString drawAtPoint: NSMakePoint(position.x + ((clockSize.width - timeSize.width) / 2.0),
+				       position.y + indicatorSize.height + IndicatorGap)
+	   withAttributes: textAttributes];
+  [self drawAmPmIndicator];
 }
 
 - (void)drawAnalogClock
 {
   NSCalendarDate *date = [NSCalendarDate calendarDate];
-  float radius = clockSize.width / 2.0;
-  NSPoint center = NSMakePoint(position.x + radius, position.y + radius);
+  float clockDiameter = largeClock ? LargeAnalogClockDiameter : NormalAnalogClockDiameter;
+  float radius = clockDiameter / 2.0;
+  float clockBottom = position.y;
+  NSPoint center = NSMakePoint(position.x + radius, clockBottom + radius);
   int hour = [date hourOfDay] % 12;
   int minute = [date minuteOfHour];
   int second = [date secondOfMinute];
   float hourAngle = ((float)hour + ((float)minute / 60.0)) * ((float)M_PI / 6.0);
   float minuteAngle = ((float)minute + ((float)second / 60.0)) * ((float)M_PI / 30.0);
   float secondAngle = (float)second * ((float)M_PI / 30.0);
-  float scale = clockSize.width / NormalAnalogClockDiameter;
+  float scale = clockDiameter / NormalAnalogClockDiameter;
   int tick;
 
-  [[NSColor whiteColor] set];
   {
     NSBezierPath *face = [NSBezierPath bezierPathWithOvalInRect:
 			  NSMakeRect(position.x + (2.0 * scale),
-				     position.y + (2.0 * scale),
-				     clockSize.width - (4.0 * scale),
-				     clockSize.height - (4.0 * scale))];
+				     clockBottom + (2.0 * scale),
+				     clockDiameter - (4.0 * scale),
+				     clockDiameter - (4.0 * scale))];
+
+    [[NSColor whiteColor] set];
+    [face fill];
+    [[NSColor colorWithCalibratedRed: 0.35 green: 0.0 blue: 0.0 alpha: 1.0] set];
     [face setLineWidth: 3.0 * scale];
     [face stroke];
   }
@@ -315,6 +345,7 @@
 					 center.y + cos(angle) * innerRadius)];
       [tickPath lineToPoint: NSMakePoint(center.x + sin(angle) * outerRadius,
 					 center.y + cos(angle) * outerRadius)];
+      [((tick % 5) == 0 ? [NSColor darkGrayColor] : [NSColor blackColor]) set];
       [tickPath setLineWidth: ((tick % 5) == 0 ? 2.0 : 1.0) * scale];
       [tickPath stroke];
     }
@@ -338,6 +369,7 @@
     }
 
   {
+    [[NSColor blackColor] set];
     NSBezierPath *hourHand = [NSBezierPath bezierPath];
     [hourHand moveToPoint: center];
     [hourHand lineToPoint: NSMakePoint(center.x + sin(hourAngle) * (radius * 0.45),
@@ -368,6 +400,45 @@
   [[NSColor whiteColor] set];
   NSRectFill(NSMakeRect(center.x - (3.0 * scale), center.y - (3.0 * scale),
 			6.0 * scale, 6.0 * scale));
+
+  {
+    NSString *indicatorString = ([date hourOfDay] < 12) ? @"AM" : @"PM";
+    NSDictionary *blackIndicatorAttributes;
+    NSSize indicatorSize;
+    NSPoint indicatorPoint;
+
+    blackIndicatorAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+					     [indicatorAttributes objectForKey: NSFontAttributeName], NSFontAttributeName,
+					     [NSColor blackColor], NSForegroundColorAttributeName,
+					     nil];
+    indicatorSize = [indicatorString sizeWithAttributes: blackIndicatorAttributes];
+    indicatorPoint = NSMakePoint(center.x - (indicatorSize.width / 2.0),
+				 center.y - indicatorSize.height - (8.0 * scale));
+    [self drawAmPmIndicatorAtPoint: indicatorPoint
+		    withAttributes: blackIndicatorAttributes];
+  }
+}
+
+- (void)drawAmPmIndicator
+{
+  NSCalendarDate *date = [NSCalendarDate calendarDate];
+  NSString *indicatorString = ([date hourOfDay] < 12) ? @"AM" : @"PM";
+  NSSize indicatorSize = [indicatorString sizeWithAttributes: indicatorAttributes];
+  NSPoint indicatorPoint;
+
+  indicatorPoint = NSMakePoint(position.x + ((clockSize.width - indicatorSize.width) / 2.0),
+			       position.y);
+  [self drawAmPmIndicatorAtPoint: indicatorPoint
+		  withAttributes: indicatorAttributes];
+}
+
+- (void)drawAmPmIndicatorAtPoint:(NSPoint)indicatorPoint
+		   withAttributes:(NSDictionary *)attributes
+{
+  NSCalendarDate *date = [NSCalendarDate calendarDate];
+  NSString *indicatorString = ([date hourOfDay] < 12) ? @"AM" : @"PM";
+
+  [indicatorString drawAtPoint: indicatorPoint withAttributes: attributes];
 }
 
 - (void)oneStep

@@ -5,6 +5,11 @@
 
 #define RAND_FLOAT ((float)rand() / (float)RAND_MAX)
 #define StepManTwoPi 6.2831853
+#define StepManPlayerSpeed 0.16
+#define StepManEnemyBaseSpeed 0.075
+#define StepManEnemySpeedStep 0.006
+#define StepManRandomDirectionChance 0.28
+#define StepManEnemyRandomDirectionChance 0.34
 
 static const char *StepManMaze[StepManRows] = {
   "#####################",
@@ -96,7 +101,7 @@ enum
 
   animationPhase += 0.09;
   mouthPhase++;
-  [self advanceActor: &stepMan speed: 0.17 chasing: NO];
+  [self advanceActor: &stepMan speed: StepManPlayerSpeed chasing: NO];
   if([self hasDotAtRow: stepMan.row column: stepMan.column])
     {
       dots[stepMan.row][stepMan.column] = NO;
@@ -105,7 +110,9 @@ enum
 
   for(i = 0; i < StepManMaxEnemies; i++)
     {
-      [self advanceActor: &enemies[i] speed: 0.11 + (i * 0.01) chasing: YES];
+      [self advanceActor: &enemies[i]
+		   speed: StepManEnemyBaseSpeed + (i * StepManEnemySpeedStep)
+		 chasing: YES];
       if(enemies[i].row == stepMan.row && enemies[i].column == stepMan.column)
 	{
 	  [self resetGame];
@@ -264,6 +271,16 @@ enum
       possible[possibleCount++] = (actor->direction + 2) % 4;
     }
 
+  if(possibleCount > 1 &&
+     RAND_FLOAT < (chasing ? StepManEnemyRandomDirectionChance : StepManRandomDirectionChance))
+    {
+      bestDirection = possible[rand() % possibleCount];
+      actor->direction = bestDirection;
+      actor->nextRow = actor->row + rowDelta[bestDirection];
+      actor->nextColumn = actor->column + columnDelta[bestDirection];
+      return;
+    }
+
   for(direction = 0; direction < possibleCount; direction++)
     {
       int candidate = possible[direction];
@@ -276,7 +293,7 @@ enum
 	  float dr = (float)(row - stepMan.row);
 	  float dc = (float)(column - stepMan.column);
 
-	  candidateScore = (dr * dr) + (dc * dc) + (RAND_FLOAT * 2.0);
+	  candidateScore = (dr * dr) + (dc * dc) + (RAND_FLOAT * 6.0);
 	  if(candidateScore < bestScore)
 	    {
 	      bestScore = candidateScore;
@@ -285,10 +302,14 @@ enum
 	}
       else
 	{
-	  candidateScore = [self hasDotAtRow: row column: column] ? 4.0 : RAND_FLOAT;
+	  candidateScore = RAND_FLOAT * 3.0;
+	  if([self hasDotAtRow: row column: column])
+	    {
+	      candidateScore += 1.0;
+	    }
 	  if(candidate == actor->direction)
 	    {
-	      candidateScore += 1.1;
+	      candidateScore += 0.35;
 	    }
 	  if(candidateScore > bestScore)
 	    {

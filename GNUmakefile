@@ -49,6 +49,7 @@ ADDITIONAL_GUI_LIBS +=
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
 InnerSpace_Icon.icns \
+Boink.bproj/Boink.InnerSpace \
 BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
@@ -98,6 +99,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 #
 
 SUBPROJECTS = Black.bproj Boxes.bproj \
+	Boink.bproj \
 	DictionaryWords.bproj \
         BouncyClock.bproj \
         FlyingToasters.bproj \

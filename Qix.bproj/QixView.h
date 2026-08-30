@@ -44,6 +44,7 @@ typedef	struct	qix_line		// Two moveable points make a moving line.
 	QIX		tail;			// Tail Qix values. Drawn in black.
 	
 	int		tailLen;		// Current length of tail.
+	int		colorIndex;		// Current color used to draw the head.
 }
 
 /*********************************************************************/
@@ -85,7 +86,7 @@ typedef	struct	qix_line		// Two moveable points make a moving line.
 
 //--------------------------------------------------------------//
 //																//
-- drawQix : ( QIX ) qix;										//
+- drawQix : ( QIX ) qix width : ( float ) width;				//
 //																//
 //	Draws a line between the two points in a qix structure.		//
 //																//

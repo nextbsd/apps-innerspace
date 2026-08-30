@@ -44,6 +44,7 @@
 
 // internal methods
 - (NSMutableDictionary *) modules;
+- (NSArray *) sortedModuleNames;
 - (void) destroySaverWindow;
 - (void) createSaverWindow: (BOOL)desktop;
 - (void) startTimer;

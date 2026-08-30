@@ -18,7 +18,7 @@
 
   if(row >= 0)
     {
-      module = [[modules allKeys] objectAtIndex: row];
+      module = [[self sortedModuleNames] objectAtIndex: row];
       [defaults setObject: module forKey: @"currentModule"];
       [defaults synchronize];
       ASSIGN(currentModuleName, module);
@@ -99,8 +99,8 @@
   [speedSlider setFloatValue: runSpeed];
 
   ASSIGN(currentModuleName, [defaults stringForKey: @"currentModule"]);
-  row = [[modules allKeys] indexOfObject: currentModuleName];  
-  if(row < [[modules allKeys] count])
+  row = [[self sortedModuleNames] indexOfObject: currentModuleName];  
+  if(row < [[self sortedModuleNames] count])
     {
       [moduleList reloadColumn: 0];
       [moduleList selectRow: row inColumn: 0];
@@ -112,6 +112,11 @@
 - (NSMutableDictionary *) modules
 {
   return modules;
+}
+
+- (NSArray *) sortedModuleNames
+{
+  return [[modules allKeys] sortedArrayUsingSelector: @selector(compare:)];
 }
 
 - (void) findModulesInDirectory: (NSString *) directory
@@ -498,7 +503,7 @@
 - (void) browser: (NSBrowser *)sender createRowsForColumn: (int)column
 	inMatrix: (NSMatrix *)matrix
 {
-  NSEnumerator     *e = [[[self modules] allKeys] objectEnumerator];
+  NSEnumerator     *e = [[self sortedModuleNames] objectEnumerator];
   NSString    *module = nil;
   NSBrowserCell *cell = nil;
   int i = 0;

@@ -53,6 +53,7 @@ BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
+Neko.bproj/Neko.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace \
 Polyhedra.bproj/Polyhedra.InnerSpace \
 Space2View.bproj/Space2View.InnerSpace \
@@ -97,6 +98,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 SUBPROJECTS = Black.bproj Boxes.bproj \
         BouncyClock.bproj \
         FlyingToasters.bproj \
+        Neko.bproj \
         NickSpace.bproj Polyhedra.bproj \
 	Space2View.bproj SporView.bproj \
 	Qix.bproj ItJustStopped.bproj

@@ -21,6 +21,19 @@
 										//	"A" point of a qix structure.
 #define	B_BASE_INC	( 8 )				//	Default distance to move the
 										//	"B" point of a qix structure.
+#define	DRAW_WIDTH	( 0.5 )
+#define	ERASE_WIDTH	( 2.0 )
+
+static const float qixColors[][3] = {
+	{ 1.0, 0.15, 0.15 },
+	{ 1.0, 0.75, 0.10 },
+	{ 0.10, 0.95, 0.35 },
+	{ 0.10, 0.75, 1.0 },
+	{ 0.65, 0.35, 1.0 },
+	{ 1.0, 0.25, 0.75 }
+};
+
+#define	NUM_QIX_COLORS	( sizeof( qixColors ) / sizeof( qixColors[0] ) )
 
 /**********************************************************************/
 
@@ -63,14 +76,12 @@
 
 /**********************************************************************/
 
-- setFrame: (NSRect) size 
+- (void) setFrame: (NSRect) size 
 {
   [ super setFrame: size];
   
   [ self resetQix : &head : NO ];
   [ self resetQix : &tail : YES ];
-  
-  return self;
 }
 
 /**********************************************************************/
@@ -80,7 +91,10 @@
   NSRect bounds = [self bounds];
 
   if( resetControls == YES )
+  {
     tailLen = INITLEN;
+    colorIndex = 0;
+  }
 	
 	qix->pointA.x = bounds.size.width / 3.0;
 	qix->pointA.y = bounds.size.height / 3.0;
@@ -149,16 +163,25 @@
 
 /**********************************************************************/
 
-- drawQix : ( QIX ) qix
+- drawQix : ( QIX ) qix width : ( float ) width
 {
-	PSsetlinewidth( 0.5 );
+	PSsetlinewidth( width );
 
 	PSmoveto( qix.pointA.x, qix.pointA.y );
 	PSlineto( qix.pointB.x, qix.pointB.y );
 	PSstroke( );
+	
+	return self;
+}
 
-	NSLog(@"%d, %d - %d, %d", qix.pointA.x, qix.pointA.y, qix.pointB.x, qix.pointB.y );
+/**********************************************************************/
 
+- setQixColor
+{
+	PSsetrgbcolor( qixColors[colorIndex][0],
+				   qixColors[colorIndex][1],
+				   qixColors[colorIndex][2] );
+	colorIndex = ( colorIndex + 1 ) % NUM_QIX_COLORS;
 	
 	return self;
 }
@@ -171,14 +194,14 @@
 		--tailLen;
 	else
 	{
-		PSsetgray( 1.0 );
-		[ self drawQix : tail ];
+		PSsetgray( 0.0 );
+		[ self drawQix : tail width : ERASE_WIDTH ];
 		[ self setQixPoint :  &tail.pointA ];
 		[ self setQixPoint :  &tail.pointB ];
 	}
 	
-	PSsetgray( 1.0 );
-	[ self drawQix : head ];
+	[ self setQixColor ];
+	[ self drawQix : head width : DRAW_WIDTH ];
 	[ self setQixPoint : &head.pointA ];
 	[ self setQixPoint : &head.pointB ];
 	

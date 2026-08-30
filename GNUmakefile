@@ -52,6 +52,7 @@ InnerSpace_Icon.icns \
 BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
+DictionaryWords.bproj/DictionaryWords.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
 Neko.bproj/Neko.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace \
@@ -96,6 +97,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 #
 
 SUBPROJECTS = Black.bproj Boxes.bproj \
+	DictionaryWords.bproj \
         BouncyClock.bproj \
         FlyingToasters.bproj \
         Neko.bproj \

@@ -5,6 +5,7 @@
 #define BouncyClockShowNumbersKey @"BouncyClockShowNumbers"
 #define BouncyClockLargeClockKey @"BouncyClockLargeClock"
 #define BouncyClockBubbleBounceKey @"BouncyClockBubbleBounce"
+#define BouncyClockBubbleBouncePeriodKey @"BouncyClockBubbleBouncePeriod"
 #define BouncyClockModeDigital @"Digital"
 #define BouncyClockModeAnalog  @"Analog"
 #define NormalAnalogClockDiameter 150.0
@@ -15,6 +16,8 @@
 #define LargeNumberFontSize 22.0
 #define BubbleSpringStiffness 0.42
 #define BubbleSpringDamping 0.68
+#define BubbleBouncePeriodMinimum 1.0
+#define BubbleBouncePeriodMaximum 4.0
 
 @implementation BouncyClockView
 
@@ -31,6 +34,8 @@
       showNumbersButton = nil;
       largeClockButton = nil;
       bubbleBounceButton = nil;
+      bubbleBouncePeriodSlider = nil;
+      bubbleBouncePeriodField = nil;
       [self loadDefaults];
       [self updateTextAttributes];
       position = NSMakePoint(40.0, 40.0);
@@ -56,6 +61,8 @@
   RELEASE(showNumbersButton);
   RELEASE(largeClockButton);
   RELEASE(bubbleBounceButton);
+  RELEASE(bubbleBouncePeriodSlider);
+  RELEASE(bubbleBouncePeriodField);
   [super dealloc];
 }
 
@@ -70,6 +77,7 @@
 				  [NSNumber numberWithBool: NO], BouncyClockShowNumbersKey,
 				  [NSNumber numberWithBool: NO], BouncyClockLargeClockKey,
 				  [NSNumber numberWithBool: NO], BouncyClockBubbleBounceKey,
+				  [NSNumber numberWithFloat: BubbleBouncePeriodMinimum], BouncyClockBubbleBouncePeriodKey,
 				  nil];
   [defaults registerDefaults: defaultValues];
 
@@ -78,6 +86,15 @@
   showNumbers = [defaults boolForKey: BouncyClockShowNumbersKey];
   largeClock = [defaults boolForKey: BouncyClockLargeClockKey];
   bubbleBounce = [defaults boolForKey: BouncyClockBubbleBounceKey];
+  bubbleBouncePeriod = [defaults floatForKey: BouncyClockBubbleBouncePeriodKey];
+  if(bubbleBouncePeriod < BubbleBouncePeriodMinimum)
+    {
+      bubbleBouncePeriod = BubbleBouncePeriodMinimum;
+    }
+  if(bubbleBouncePeriod > BubbleBouncePeriodMaximum)
+    {
+      bubbleBouncePeriod = BubbleBouncePeriodMaximum;
+    }
 }
 
 - (void)saveDefaults
@@ -89,6 +106,7 @@
   [defaults setBool: showNumbers forKey: BouncyClockShowNumbersKey];
   [defaults setBool: largeClock forKey: BouncyClockLargeClockKey];
   [defaults setBool: bubbleBounce forKey: BouncyClockBubbleBounceKey];
+  [defaults setFloat: bubbleBouncePeriod forKey: BouncyClockBubbleBouncePeriodKey];
   [defaults synchronize];
 }
 
@@ -414,9 +432,11 @@
     }
   else if(bubbleDistortion != 0.0 || bubbleDistortionVelocity != 0.0)
     {
-      bubbleDistortionVelocity -= bubbleDistortion * BubbleSpringStiffness;
-      bubbleDistortionVelocity *= BubbleSpringDamping;
-      bubbleDistortion += bubbleDistortionVelocity;
+      float step = 1.0 / bubbleBouncePeriod;
+
+      bubbleDistortionVelocity -= bubbleDistortion * BubbleSpringStiffness * step;
+      bubbleDistortionVelocity *= pow(BubbleSpringDamping, step);
+      bubbleDistortion += bubbleDistortionVelocity * step;
       if(fabs(bubbleDistortion) <= 0.01 && fabs(bubbleDistortionVelocity) <= 0.01)
 	{
 	  bubbleDistortion = 0.0;
@@ -461,6 +481,14 @@
 - (id)setBubbleBounce:(id)sender
 {
   bubbleBounce = ([sender state] == NSOnState);
+  if(bubbleBouncePeriodSlider != nil)
+    {
+      [bubbleBouncePeriodSlider setEnabled: bubbleBounce];
+    }
+  if(bubbleBouncePeriodField != nil)
+    {
+      [bubbleBouncePeriodField setEnabled: bubbleBounce];
+    }
   if(!bubbleBounce)
     {
       bubbleDistortion = 0.0;
@@ -473,16 +501,46 @@
   return self;
 }
 
+- (id)setBubbleBouncePeriod:(id)sender
+{
+  bubbleBouncePeriod = [sender floatValue];
+  if(bubbleBouncePeriod < BubbleBouncePeriodMinimum)
+    {
+      bubbleBouncePeriod = BubbleBouncePeriodMinimum;
+    }
+  if(bubbleBouncePeriod > BubbleBouncePeriodMaximum)
+    {
+      bubbleBouncePeriod = BubbleBouncePeriodMaximum;
+    }
+  if(bubbleBouncePeriodSlider != nil)
+    {
+      [bubbleBouncePeriodSlider setFloatValue: bubbleBouncePeriod];
+    }
+  [self updateBubbleBouncePeriodField];
+  [self saveDefaults];
+  return self;
+}
+
+- (void)updateBubbleBouncePeriodField
+{
+  if(bubbleBouncePeriodField != nil)
+    {
+      [bubbleBouncePeriodField setStringValue:
+				 [NSString stringWithFormat: @"%.1fs", bubbleBouncePeriod]];
+    }
+}
+
 - (NSView *)inspector:(id)sender
 {
   if(inspectorView == nil)
     {
-      NSRect labelFrame = NSMakeRect(12.0, 132.0, 180.0, 20.0);
-      NSRect matrixFrame = NSMakeRect(12.0, 86.0, 180.0, 44.0);
+      NSRect labelFrame = NSMakeRect(12.0, 170.0, 180.0, 20.0);
+      NSRect matrixFrame = NSMakeRect(12.0, 124.0, 180.0, 44.0);
       NSTextField *label;
+      NSTextField *periodLabel;
       NSButtonCell *prototype;
 
-      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0.0, 0.0, 220.0, 164.0)];
+      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0.0, 0.0, 220.0, 202.0)];
 
       label = [[NSTextField alloc] initWithFrame: labelFrame];
       [label setStringValue: @"Clock style"];
@@ -509,7 +567,7 @@
       [clockModeMatrix selectCellAtRow: analogClock ? 1 : 0 column: 0];
       [inspectorView addSubview: clockModeMatrix];
 
-      showNumbersButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 58.0, 180.0, 22.0)];
+      showNumbersButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 96.0, 180.0, 22.0)];
       [showNumbersButton setButtonType: NSSwitchButton];
       [showNumbersButton setTitle: @"Show numbers"];
       [showNumbersButton setState: showNumbers ? NSOnState : NSOffState];
@@ -517,7 +575,7 @@
       [showNumbersButton setAction: @selector(setShowNumbers:)];
       [inspectorView addSubview: showNumbersButton];
 
-      largeClockButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 34.0, 180.0, 22.0)];
+      largeClockButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 72.0, 180.0, 22.0)];
       [largeClockButton setButtonType: NSSwitchButton];
       [largeClockButton setTitle: @"Large clock"];
       [largeClockButton setState: largeClock ? NSOnState : NSOffState];
@@ -525,13 +583,42 @@
       [largeClockButton setAction: @selector(setLargeClock:)];
       [inspectorView addSubview: largeClockButton];
 
-      bubbleBounceButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 10.0, 180.0, 22.0)];
+      bubbleBounceButton = [[NSButton alloc] initWithFrame: NSMakeRect(12.0, 48.0, 180.0, 22.0)];
       [bubbleBounceButton setButtonType: NSSwitchButton];
       [bubbleBounceButton setTitle: @"Bubble bounce"];
       [bubbleBounceButton setState: bubbleBounce ? NSOnState : NSOffState];
       [bubbleBounceButton setTarget: self];
       [bubbleBounceButton setAction: @selector(setBubbleBounce:)];
       [inspectorView addSubview: bubbleBounceButton];
+
+      periodLabel = [[NSTextField alloc] initWithFrame: NSMakeRect(12.0, 26.0, 180.0, 18.0)];
+      [periodLabel setStringValue: @"Bounce period"];
+      [periodLabel setEditable: NO];
+      [periodLabel setSelectable: NO];
+      [periodLabel setBordered: NO];
+      [periodLabel setDrawsBackground: NO];
+      [inspectorView addSubview: periodLabel];
+      RELEASE(periodLabel);
+
+      bubbleBouncePeriodField = [[NSTextField alloc] initWithFrame: NSMakeRect(158.0, 26.0, 44.0, 18.0)];
+      [bubbleBouncePeriodField setEditable: NO];
+      [bubbleBouncePeriodField setSelectable: NO];
+      [bubbleBouncePeriodField setBordered: NO];
+      [bubbleBouncePeriodField setDrawsBackground: NO];
+      [bubbleBouncePeriodField setAlignment: NSRightTextAlignment];
+      [bubbleBouncePeriodField setEnabled: bubbleBounce];
+      [inspectorView addSubview: bubbleBouncePeriodField];
+
+      bubbleBouncePeriodSlider = [[NSSlider alloc] initWithFrame: NSMakeRect(12.0, 6.0, 190.0, 20.0)];
+      [bubbleBouncePeriodSlider setMinValue: BubbleBouncePeriodMinimum];
+      [bubbleBouncePeriodSlider setMaxValue: BubbleBouncePeriodMaximum];
+      [bubbleBouncePeriodSlider setFloatValue: bubbleBouncePeriod];
+      [bubbleBouncePeriodSlider setContinuous: YES];
+      [bubbleBouncePeriodSlider setEnabled: bubbleBounce];
+      [bubbleBouncePeriodSlider setTarget: self];
+      [bubbleBouncePeriodSlider setAction: @selector(setBubbleBouncePeriod:)];
+      [inspectorView addSubview: bubbleBouncePeriodSlider];
+      [self updateBubbleBouncePeriodField];
     }
 
   return inspectorView;

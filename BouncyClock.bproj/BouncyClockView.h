@@ -10,6 +10,7 @@
   float bubbleDistortionVelocity;
   float bubbleDistortionX;
   float bubbleDistortionY;
+  float bubbleBouncePeriod;
   NSString *timeString;
   NSDictionary *textAttributes;
   NSDictionary *numberAttributes;
@@ -22,6 +23,8 @@
   NSButton *showNumbersButton;
   NSButton *largeClockButton;
   NSButton *bubbleBounceButton;
+  NSSlider *bubbleBouncePeriodSlider;
+  NSTextField *bubbleBouncePeriodField;
 }
 - (void)oneStep;
 - (void)loadDefaults;
@@ -38,6 +41,8 @@
 - (id)setShowNumbers:(id)sender;
 - (id)setLargeClock:(id)sender;
 - (id)setBubbleBounce:(id)sender;
+- (id)setBubbleBouncePeriod:(id)sender;
+- (void)updateBubbleBouncePeriodField;
 - (NSView *)inspector:(id)sender;
 @end
 

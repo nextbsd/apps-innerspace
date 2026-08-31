@@ -397,9 +397,16 @@
     [secondHand stroke];
   }
 
-  [[NSColor whiteColor] set];
-  NSRectFill(NSMakeRect(center.x - (3.0 * scale), center.y - (3.0 * scale),
-			6.0 * scale, 6.0 * scale));
+  {
+    NSBezierPath *hub = [NSBezierPath bezierPathWithOvalInRect:
+			 NSMakeRect(center.x - (4.0 * scale),
+				    center.y - (4.0 * scale),
+				    8.0 * scale,
+				    8.0 * scale)];
+
+    [[NSColor lightGrayColor] set];
+    [hub fill];
+  }
 
   {
     NSString *indicatorString = ([date hourOfDay] < 12) ? @"AM" : @"PM";

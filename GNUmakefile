@@ -56,6 +56,7 @@ Boxes.bproj/Boxes.InnerSpace \
 DictionaryWords.bproj/DictionaryWords.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
 Kaleidoscope.bproj/Kaleidoscope.InnerSpace \
+SignalHead.bproj/SignalHead.InnerSpace \
 StepMan.bproj/StepMan.InnerSpace \
 Neko.bproj/Neko.InnerSpace \
 NickSpace.bproj/NickSpace.InnerSpace \
@@ -105,6 +106,7 @@ SUBPROJECTS = Black.bproj Boxes.bproj \
         BouncyClock.bproj \
         FlyingToasters.bproj \
         Kaleidoscope.bproj \
+        SignalHead.bproj \
         StepMan.bproj \
         Neko.bproj \
         NickSpace.bproj Polyhedra.bproj \

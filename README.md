@@ -17,12 +17,25 @@ open build/InnerSpace.app
 
 You can also run `make run`, or copy `build/InnerSpace.app` into Applications.
 The app bundles all 16 animation modules. Select an animation, then choose
-**Preview**, **Desktop**, or **Full Screen**. The slider adjusts animation speed.
+**Preview**, **Desktop**, or **Full Screen**. The last selected module and mode
+are saved as you change them and restored on the next launch. Desktop mode
+restarts quietly in the background, while Preview opens the controls and Full
+Screen reopens the saver. On first launch, or if the saved mode is invalid,
+Preview is used; a removed module falls back to Space2View.
+The slider adjusts animation speed.
 Press a key or click to leave full screen; Preview stops the desktop background.
 Closing the control window leaves the animation running on the desktop. If you
 close it during preview, InnerSpace switches to desktop mode automatically.
-Click the Dock icon or choose **InnerSpace > Show Controls** (Command-0) to reopen
-the controls without restarting the desktop animation. Use Command-Q to quit.
+Click the Dock icon, choose **InnerSpace > Show Controls** (Command-0), or use
+**Show Controls** in the sparkle-shaped menu-bar status item to reopen the
+controls without restarting the desktop animation.
+
+The status menu provides every installed module, Preview/Desktop/Full Screen,
+pause/resume, animation speed, and Quit. Check **Hide Dock Icon** in the main
+window (below the speed slider), or select it in the status menu, to run without
+a Dock icon; this preference is saved across launches. The status item stays
+available, and Show Controls works while the Dock icon is hidden. Uncheck
+**Hide Dock Icon** to restore it. Quit from the status menu or use Command-Q.
 
 The default build targets your Mac's processor. To build for both Apple Silicon
 and Intel:
@@ -46,7 +59,12 @@ changes (Black should stay black), checks the generated module manifest against
 the dropdown, verifies StepMan’s image resource, and exercises all three window modes. The
 window checks briefly open desktop/full-screen windows. They also exercise the
 native settings, preference persistence, closing the controls with a live timer,
-and reopening through the Dock/menu paths. Tests restore your saved preferences. PNG render samples are
+and reopening through the Dock/menu paths. The status-menu checks cover module
+selection, modes, speed, pause/resume, Dock hiding/restoration, startup with a
+hidden Dock icon, and Quit. A separate test runs real quit/relaunch cycles for
+all three modes, closing controls into desktop mode, and missing/invalid saved
+settings. It uses a temporary app identifier and preferences domain. Tests
+restore your saved preferences. PNG render samples are
 written to `build/`. Runtime checks were performed on Apple Silicon; the Intel
 slice is cross-compiled, not runtime-tested on Intel hardware.
 
@@ -87,6 +105,18 @@ Additional macOS-built `.InnerSpace` bundles can be placed in
 The original GNUstep build and interface files are retained. On GNUstep systems,
 run `make` with gnustep-make configured. Modules are bundled with the application;
 additional built modules can be copied to `$HOME/GNUstep/Library/InnerSpace`.
+On macOS with a GNUstep toolchain, explicitly select that build with:
+
+```sh
+make INNERSPACE_PLATFORM=gnustep
+```
+
+The menu-bar status item and Dock preference belong to the Cocoa host only;
+GNUstep retains its original application menus, Gorm interface, startup, and
+module-switching behavior. Session mode restoration is Cocoa-only. No Cocoa
+status-item or activation-policy API is compiled by the GNUstep target. A full
+GNUstep compile has not been verified in this macOS environment because the
+GNUstep toolchain is not installed.
 
 ## Notice
 

@@ -1,4 +1,5 @@
-ifeq ($(shell uname -s),Darwin)
+INNERSPACE_PLATFORM ?= $(if $(filter Darwin,$(shell uname -s)),cocoa,gnustep)
+ifeq ($(INNERSPACE_PLATFORM),cocoa)
 include macOS/Makefile
 else
 #

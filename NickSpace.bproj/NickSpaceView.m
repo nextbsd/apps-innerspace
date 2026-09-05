@@ -489,7 +489,7 @@ void doSeg(float x1, float y1, float x2, float y2)
     {
   
       /* these are preserved from bezierView--I don't know if they're doing any good */
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(GNUSTEP)
       [self allocateGState];		// For faster lock/unlockFocus
       // [self setClipping:NO];		// even faster...
       
@@ -498,7 +498,7 @@ void doSeg(float x1, float y1, float x2, float y2)
       image = nil;
       lastLevel = 0;
       
-#ifndef __APPLE__
+#if !defined(__APPLE__) || defined(GNUSTEP)
       if(![NSBundle loadNibNamed: @"NickSpace" owner:self])
 	{
 	  NSLog(@"Failed to load inspector");
@@ -570,7 +570,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 
 - (void)dealloc
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(GNUSTEP)
   [colorWell deactivate];
   [inspector release];
 #endif
@@ -747,10 +747,17 @@ void doSeg(float x1, float y1, float x2, float y2)
 
 - (id)addColor:(id)sender
 {
-  float 
-    red = (float)rand()/(float)RAND_MAX, 
-    green = (float)rand()/(float)RAND_MAX, 
+#if defined(__APPLE__) && !defined(GNUSTEP)
+  float
+    red = (float)rand()/(float)RAND_MAX,
+    green = (float)rand()/(float)RAND_MAX,
     blue = (float)rand()/(float)RAND_MAX;
+#else
+  float
+    red = (float)random()/(float)LONG_MAX,
+    green = (float)random()/(float)LONG_MAX,
+    blue = (float)random()/(float)LONG_MAX;
+#endif
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   NSColor  *color = [NSColor colorWithCalibratedRed: red
 			     green: green

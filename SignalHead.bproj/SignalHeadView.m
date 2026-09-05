@@ -119,8 +119,12 @@
       captionIndex = (captionIndex + 1 + (rand() % 2)) % SignalHeadCaptionCount;
     }
 
-  // InnerSpace calls oneStep with a drawing context, including offscreen hosts.
+#if defined(__APPLE__) && !defined(GNUSTEP)
+  // The Cocoa host renders into an offscreen bitmap.
   [self drawRect: [self bounds]];
+#else
+  [self setNeedsDisplay: YES];
+#endif
 }
 
 - (void)drawBackdropInBounds:(NSRect)bounds

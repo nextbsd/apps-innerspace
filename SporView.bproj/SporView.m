@@ -144,7 +144,7 @@
   
   initDone = NO;
   inspectorPresent = NO;
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(GNUSTEP)
   [self nativeRestoreSettings];
 #endif	
   
@@ -214,7 +214,7 @@
   return inspector;
 }
 
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(GNUSTEP)
 - (void)dealloc { [inspector release]; [super dealloc]; }
 #endif
 

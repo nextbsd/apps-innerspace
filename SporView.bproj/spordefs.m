@@ -24,7 +24,7 @@
 #ifdef NeXT
 	#include	"draw.h"
 #endif
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
 	#include "draw.h"
 #endif
 
@@ -82,7 +82,7 @@ void drawSpore(int x, int y, int color, int pow )
 	cSetColor( color, pow );
 	cSetSpor( x, abs(ZeroY - y ) );
 #endif	
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
         cSetColor( color, pow );
         cSetSpor( x, abs(ZeroY - y ) );
 #endif
@@ -99,7 +99,7 @@ void diagLine(int x1, int y1, int y2, int col )
 	cSetColor( col, 100 ); 
 	cSetLine( x1, y1, x1, y2 );
 #endif
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
         cSetColor( col, 100 );
         cSetLine( x1, y1, x1, y2 );
 #endif
@@ -151,7 +151,7 @@ long tosKeyTest(void)
 #ifdef NeXT
 	return( 0 );
 #endif
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
 	return ( 0 );
 #endif
 }
@@ -180,7 +180,7 @@ long sysTimer(void)
 #ifdef NeXT
 	return( 0 );
 #endif
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
 	return 0;
 #endif
 }

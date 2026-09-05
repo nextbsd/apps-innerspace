@@ -119,7 +119,8 @@
       captionIndex = (captionIndex + 1 + (rand() % 2)) % SignalHeadCaptionCount;
     }
 
-  [self setNeedsDisplay: YES];
+  // InnerSpace calls oneStep with a drawing context, including offscreen hosts.
+  [self drawRect: [self bounds]];
 }
 
 - (void)drawBackdropInBounds:(NSRect)bounds

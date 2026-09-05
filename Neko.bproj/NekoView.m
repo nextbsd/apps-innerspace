@@ -13,6 +13,8 @@
 
 @implementation NekoView
 
+- (void)setAnimationHostView:(NSView *)host { animationHostView = host; }
+
 - (id)initWithFrame:(NSRect)frameRect
 {
   self = [super initWithFrame: frameRect];
@@ -76,7 +78,8 @@
 
 - (void)updateSaverMode
 {
-  NSWindow *hostWindow = [self window];
+  NSView *coordinateView = animationHostView ? animationHostView : self;
+  NSWindow *hostWindow = [coordinateView window];
 
   saverMode = (hostWindow != nil && [hostWindow level] >= NSScreenSaverWindowLevel);
 }
@@ -139,13 +142,14 @@
 
 - (NSPoint)mousePositionInView
 {
-  NSWindow *hostWindow = [self window];
+  NSView *coordinateView = animationHostView ? animationHostView : self;
+  NSWindow *hostWindow = [coordinateView window];
   NSPoint point = [NSEvent mouseLocation];
 
   if(hostWindow != nil)
     {
       point = [hostWindow convertScreenToBase: point];
-      point = [self convertPoint: point fromView: nil];
+      point = [coordinateView convertPoint: point fromView: nil];
     }
 
   return NSMakePoint(point.x - (CAT_WIDTH / 2.0),

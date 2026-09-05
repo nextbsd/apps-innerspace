@@ -68,7 +68,7 @@ main()
 #ifdef NeXT
 	int	start_simulation()
 #endif
-#ifdef GNUSTEP
+#if defined(GNUSTEP) || defined(__APPLE__)
 	int	start_simulation()
 #endif
 {

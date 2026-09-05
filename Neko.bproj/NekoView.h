@@ -8,6 +8,7 @@ typedef enum {
 
 @interface NekoView : NSView
 {
+  NSView *animationHostView; // Non-owning; supplied by offscreen rendering hosts.
   NSPoint catPosition;
   NSPoint catVelocity;
   NSPoint targetPosition;
@@ -20,5 +21,6 @@ typedef enum {
 }
 
 - (void)oneStep;
+- (void)setAnimationHostView:(NSView *)host;
 
 @end

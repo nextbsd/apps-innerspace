@@ -857,6 +857,10 @@ float distance(float xcrd, float ycrd, float zcrd)
 {
   [super initWithFrame: frameRect];	
   selectedIndex = DODECAHEDRON + 1;
+#ifdef __APPLE__
+  NSNumber *savedShape = [[NSUserDefaults standardUserDefaults] objectForKey:@"MacPolyhedron"];
+  if (savedShape) selectedIndex = MAX(0, MIN(5, [savedShape intValue]));
+#endif
   [self useNewFrame:frameRect];
   srand(time(0));
   return self;
@@ -979,6 +983,10 @@ float distance(float xcrd, float ycrd, float zcrd)
   // NSLog(@"inspector: %@",inspectorPanel);
   return inspectorPanel;
 }
+
+#ifdef __APPLE__
+- (void)dealloc { [inspectorPanel release]; [super dealloc]; }
+#endif
 
 - (BOOL) useBufferedWindow
 {	

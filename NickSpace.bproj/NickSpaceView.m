@@ -489,18 +489,22 @@ void doSeg(float x1, float y1, float x2, float y2)
     {
   
       /* these are preserved from bezierView--I don't know if they're doing any good */
+#ifndef __APPLE__
       [self allocateGState];		// For faster lock/unlockFocus
       // [self setClipping:NO];		// even faster...
       
+#endif
       /* Miscellaneous initializations */
       image = nil;
       lastLevel = 0;
       
+#ifndef __APPLE__
       if(![NSBundle loadNibNamed: @"NickSpace" owner:self])
 	{
 	  NSLog(@"Failed to load inspector");
 	}
       
+#endif
       /* Set target/action for buttons in the matrix */
       [[addRemoveButtons cellAtRow:0 column:0] setTarget:self];
       [[addRemoveButtons cellAtRow:0 column:0] setAction:@selector(addColor:)];
@@ -549,7 +553,7 @@ void doSeg(float x1, float y1, float x2, float y2)
 	  tcRatio = [userDef floatForKey: @"tcRatio"];
 	  tlRatio = [userDef floatForKey: @"tlRatio"];
 	  numColors = [userDef integerForKey: @"numColors"];
-	  colors = [[NSMutableArray alloc] initWithArray: AUTORELEASE([userDef arrayForKey: @"colors"])];
+	  colors = [[NSMutableArray alloc] initWithArray: [userDef arrayForKey: @"colors"]];
 	  currColor = 0;
 	}
       
@@ -566,6 +570,10 @@ void doSeg(float x1, float y1, float x2, float y2)
 
 - (void)dealloc
 {
+#ifdef __APPLE__
+  [colorWell deactivate];
+  [inspector release];
+#endif
   if (image)
     {
       [image release];
@@ -740,9 +748,9 @@ void doSeg(float x1, float y1, float x2, float y2)
 - (id)addColor:(id)sender
 {
   float 
-    red = (float)random()/(float)LONG_MAX, 
-    green = (float)random()/(float)LONG_MAX, 
-    blue = (float)random()/(float)LONG_MAX;
+    red = (float)rand()/(float)RAND_MAX, 
+    green = (float)rand()/(float)RAND_MAX, 
+    blue = (float)rand()/(float)RAND_MAX;
   NSUserDefaults *userDefs = [NSUserDefaults standardUserDefaults];
   NSColor  *color = [NSColor colorWithCalibratedRed: red
 			     green: green

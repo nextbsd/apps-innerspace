@@ -143,7 +143,10 @@
     enemy = atoi( aDefault );
   
   initDone = NO;
-  inspectorPresent = NO;	
+  inspectorPresent = NO;
+#ifdef __APPLE__
+  [self nativeRestoreSettings];
+#endif	
   
   return self;
 }
@@ -210,6 +213,10 @@
     }
   return inspector;
 }
+
+#ifdef __APPLE__
+- (void)dealloc { [inspector release]; [super dealloc]; }
+#endif
 
 - (void)inspectorInstalled
 {

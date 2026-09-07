@@ -718,6 +718,7 @@ static double RandomFraction(void)
   float valueWidth = 310.0;
   float meterX;
   float meterWidth;
+  float fillWidth;
   NSRect meterRect;
   NSRect fillRect;
 
@@ -744,7 +745,12 @@ static double RandomFraction(void)
       percent = 0.0;
     }
   fillRect = meterRect;
-  fillRect.size.width = meterRect.size.width * percent / 100.0;
+  fillWidth = meterRect.size.width * percent / 100.0;
+  if(percent > 0.0 && fillWidth < 1.0)
+    {
+      fillWidth = 1.0;
+    }
+  fillRect.size.width = fillWidth;
   [color set];
   NSRectFill(fillRect);
 

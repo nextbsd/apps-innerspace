@@ -7,6 +7,7 @@
   unsigned long long previousNetRx;
   unsigned long long previousNetTx;
   NSDate *lastSampleDate;
+  NSString *hostName;
   NSDictionary *titleAttributes;
   NSDictionary *labelAttributes;
   NSDictionary *valueAttributes;
@@ -37,12 +38,14 @@
 - (void)oneStep;
 - (void)updateTextAttributes;
 - (void)sampleStats;
+- (void)sampleHostName;
 - (void)sampleProcessCounts;
 - (void)sampleTemperature;
 - (void)drawStats;
 - (void)placePanel;
 - (void)updateAnimationAtTime:(NSTimeInterval)time;
 - (NSString *)uptimeString;
+- (NSString *)displayHostName;
 - (void)drawMeterAtY:(float)y
 	       label:(NSString *)label
 	       value:(NSString *)value

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #define BYTES_PER_KIB 1024ULL
 #define PROC_LINE_LENGTH 512
@@ -49,6 +50,7 @@ static double RandomFraction(void)
       previousNetRx = 0ULL;
       previousNetTx = 0ULL;
       lastSampleDate = nil;
+      hostName = nil;
       cpuPercent = 0.0;
       memoryPercent = 0.0;
       swapPercent = 0.0;
@@ -71,6 +73,7 @@ static double RandomFraction(void)
       panelOpacity = 0.0;
       [self placePanel];
       [self updateTextAttributes];
+      [self sampleHostName];
       [self sampleStats];
     }
   return self;
@@ -79,6 +82,7 @@ static double RandomFraction(void)
 - (void)dealloc
 {
   RELEASE(lastSampleDate);
+  RELEASE(hostName);
   RELEASE(titleAttributes);
   RELEASE(labelAttributes);
   RELEASE(valueAttributes);
@@ -134,6 +138,21 @@ static double RandomFraction(void)
 - (NSString *)windowTitle
 {
   return @"System Stats";
+}
+
+- (void)sampleHostName
+{
+  char buffer[256];
+
+  if(gethostname(buffer, sizeof(buffer)) == 0)
+    {
+      buffer[sizeof(buffer) - 1] = '\0';
+      ASSIGN(hostName, [NSString stringWithUTF8String: buffer]);
+    }
+  else
+    {
+      ASSIGN(hostName, @"unknown");
+    }
 }
 
 - (void)sampleStats
@@ -561,6 +580,20 @@ static double RandomFraction(void)
   return [NSString stringWithFormat: @"%lluh %llum", hours, minutes];
 }
 
+- (NSString *)displayHostName
+{
+  if(hostName == nil || [hostName length] == 0)
+    {
+      return @"unknown";
+    }
+  if([hostName length] > 24)
+    {
+      return [NSString stringWithFormat: @"%@...",
+		       [hostName substringToIndex: 24]];
+    }
+  return hostName;
+}
+
 - (void)placePanel
 {
   NSRect bounds = [self bounds];
@@ -632,8 +665,9 @@ static double RandomFraction(void)
   [@"System Stats" drawAtPoint: NSMakePoint(startX, y) withAttributes: titleAttributes];
   y -= 28.0;
 
-  subtitle = [NSString stringWithFormat: @"Load %.2f   Uptime %@   Processes %d   Threads %d",
-		       loadAverage1, [self uptimeString], processCount, threadCount];
+  subtitle = [NSString stringWithFormat: @"Host %@   Load %.2f   Uptime %@   Processes %d   Threads %d",
+		       [self displayHostName], loadAverage1, [self uptimeString],
+		       processCount, threadCount];
   [subtitle drawAtPoint: NSMakePoint(startX, y) withAttributes: smallAttributes];
   y -= 44.0;
 

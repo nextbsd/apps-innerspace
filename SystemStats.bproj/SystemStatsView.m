@@ -1,4 +1,5 @@
 #include "SystemStatsView.h"
+#include "SystemStatsNetwork.h"
 #include <sys/statvfs.h>
 #if defined(__APPLE__)
 #include <mach/mach.h>
@@ -57,6 +58,7 @@ static double RandomFraction(void)
       diskPercent = 0.0;
       netRxRate = 0.0;
       netTxRate = 0.0;
+      netPeakRate = 1024.0;
       loadAverage1 = 0.0;
       temperatureCelsius = -1.0;
       memoryUsed = 0ULL;
@@ -325,24 +327,7 @@ static double RandomFraction(void)
         {
           if(sysctl(mib, 6, buffer, &length, NULL, 0) == 0)
             {
-              char *cursor = buffer;
-              char *end = buffer + length;
-              while((size_t)(end - cursor) >= sizeof(struct if_msghdr))
-                {
-                  struct if_msghdr *header = (struct if_msghdr *)cursor;
-                  if(header->ifm_msglen < sizeof(*header) || header->ifm_msglen > end - cursor)
-                    break;
-                  if(header->ifm_type == RTM_IFINFO2 && header->ifm_msglen >= sizeof(struct if_msghdr2))
-                    {
-                      struct if_msghdr2 *info = (struct if_msghdr2 *)cursor;
-                      if(!(info->ifm_flags & IFF_LOOPBACK))
-                        {
-                          netRx += info->ifm_data.ifi_ibytes;
-                          netTx += info->ifm_data.ifi_obytes;
-                        }
-                    }
-                  cursor += header->ifm_msglen;
-                }
+              SystemStatsNetworkCounters(buffer, length, &netRx, &netTx);
             }
           free(buffer);
         }
@@ -375,7 +360,7 @@ static double RandomFraction(void)
       fclose(file);
     }
 #endif
-  if(previousNetRx != 0ULL && elapsed > 0.0 && netRx >= previousNetRx && netTx >= previousNetTx)
+  if(lastSampleDate != nil && elapsed > 0.0 && netRx >= previousNetRx && netTx >= previousNetTx)
     {
       netRxRate = (float)(netRx - previousNetRx) / (float)elapsed;
       netTxRate = (float)(netTx - previousNetTx) / (float)elapsed;
@@ -385,6 +370,7 @@ static double RandomFraction(void)
       netRxRate = 0.0;
       netTxRate = 0.0;
     }
+  netPeakRate = MAX(netPeakRate, netRxRate + netTxRate);
   previousNetRx = netRx;
   previousNetTx = netTx;
 
@@ -704,7 +690,8 @@ static double RandomFraction(void)
   netValue = [NSString stringWithFormat: @"down %@   up %@",
 		       [self rateStringForBytesPerSecond: netRxRate],
 		       [self rateStringForBytesPerSecond: netTxRate]];
-  [self drawMeterAtY: y label: @"Network" value: netValue percent: 0.0
+  [self drawMeterAtY: y label: @"Network" value: netValue
+             percent: (100.0 * (netRxRate + netTxRate) / netPeakRate)
 	      color: [NSColor colorWithCalibratedRed: 0.94 green: 0.30 blue: 0.25 alpha: 1.0]];
   y -= ROW_HEIGHT;
 

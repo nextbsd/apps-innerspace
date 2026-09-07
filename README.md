@@ -94,6 +94,8 @@ SystemStats displays CPU, memory, swap, disk, network, load, uptime, and process
 statistics on both Linux and macOS. The panel fades in at a random position,
 remains fully visible for 10–15 seconds, then fades out before appearing elsewhere.
 Each fade lasts two seconds, with a one-second gap between appearances.
+The network row shows download/upload rates; its bar scales combined throughput
+against the peak observed during the session (with a minimum scale of 1 KiB/s).
 macOS thread counts include only processes
 that permit inspection; temperature displays as unavailable because macOS has
 no supported public Celsius-reading API.

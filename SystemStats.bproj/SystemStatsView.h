@@ -18,6 +18,7 @@
   float diskPercent;
   float netRxRate;
   float netTxRate;
+  float netPeakRate;
   float loadAverage1;
   float temperatureCelsius;
   unsigned long long memoryUsed;

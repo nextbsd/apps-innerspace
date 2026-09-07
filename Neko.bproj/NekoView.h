@@ -3,7 +3,8 @@
 typedef enum {
   NekoStateWalking = 0,
   NekoStateSleeping,
-  NekoStateWandering
+  NekoStateWandering,
+  NekoStateSurprised
 } NekoState;
 
 @interface NekoView : NSView
@@ -15,8 +16,11 @@ typedef enum {
   NSPoint wanderTarget;
   NekoState state;
   int sleepTicks;
+  int surpriseTicks;
   int animationTicks;
+  int runningTicks;
   NSImage *spriteSheet;
+  NSImage *runningSpriteSheet;
   BOOL facingLeft;
   BOOL saverMode;
 }

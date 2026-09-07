@@ -10,6 +10,7 @@
 #define WANDER_SPEED 4.0
 #define FOUND_DISTANCE 18.0
 #define SLEEP_DELAY 18
+#define SURPRISE_DELAY 10 // About 0.55 seconds at the default animation speed.
 #define WAKE_DELAY 90
 
 @implementation NekoView
@@ -27,8 +28,11 @@
       wanderTarget = catPosition;
       state = NekoStateWalking;
       sleepTicks = 0;
+      surpriseTicks = 0;
       animationTicks = 0;
-      [self loadSpriteSheet];
+      runningTicks = 0;
+      spriteSheet = [self newSpriteSheetNamed: @"neko_animation_steps"];
+      runningSpriteSheet = [self newSpriteSheetNamed: @"neko_running_32"];
       facingLeft = NO;
       saverMode = NO;
       srand((unsigned int)[[NSDate date] timeIntervalSince1970]);
@@ -76,6 +80,7 @@
 {
   state = NekoStateWalking;
   sleepTicks = 0;
+  surpriseTicks = 0;
 }
 
 - (void)updateSaverMode
@@ -210,7 +215,11 @@
     }
   else
     {
-      sleepTicks = 0;
+      if(sleepTicks > 0)
+        {
+          [self beginSurprise];
+          return;
+        }
       [self moveToward: targetPosition speed: WALK_SPEED];
     }
 }
@@ -222,8 +231,25 @@
 
   if([self distanceFromCatTo: targetPosition] > FOUND_DISTANCE * 2.0)
     {
+      [self beginSurprise];
+    }
+}
+
+- (void)beginSurprise
+{
+  state = NekoStateSurprised;
+  surpriseTicks = SURPRISE_DELAY;
+  sleepTicks = 0;
+  catVelocity = NSZeroPoint;
+}
+
+- (void)updateSurprised
+{
+  // Keep the alert pose still even if the pointer continues moving.
+  if(--surpriseTicks <= 0)
+    {
       state = NekoStateWalking;
-      sleepTicks = 0;
+      [self updateWalking];
     }
 }
 
@@ -248,16 +274,16 @@
 }
 
 // Frames are numbered left-to-right, top-to-bottom in the 4 by 3 sheet.
-- (void)loadSpriteSheet
+- (NSImage *)newSpriteSheetNamed:(NSString *)name
 {
   NSString *path = [[NSBundle bundleForClass: [NekoView class]]
-                    pathForResource: @"neko_animation_steps" ofType: @"png"];
+                    pathForResource: name ofType: @"png"];
   NSData *data = path ? [NSData dataWithContentsOfFile: path] : nil;
   NSBitmapImageRep *source = data ? [NSBitmapImageRep imageRepWithData: data] : nil;
   if(source == nil || [source pixelsWide] != 128 || [source pixelsHigh] != 96)
     {
-      NSLog(@"Neko: missing or invalid neko_animation_steps.png (expected 128x96)");
-      return;
+      NSLog(@"Neko: missing or invalid %@.png (expected 128x96)", name);
+      return nil;
     }
 
   // Keep the supplied asset intact; remove only its red color key at load time.
@@ -278,32 +304,46 @@
           [rgba setColor: color atX: x y: y];
         }
     }
-  spriteSheet = [[NSImage alloc] initWithSize: NSMakeSize(128, 96)];
-  [spriteSheet addRepresentation: rgba];
+  NSImage *image = [[NSImage alloc] initWithSize: NSMakeSize(128, 96)];
+  [image addRepresentation: rgba];
   [rgba release];
+  return image;
 }
 
 - (void)dealloc
 {
   [spriteSheet release];
+  [runningSpriteSheet release];
   [super dealloc];
+}
+
+- (BOOL)isRunning
+{
+  return (state == NekoStateWalking || state == NekoStateWandering) &&
+         fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1;
 }
 
 - (int)spriteFrame
 {
+  if(state == NekoStateSurprised)
+    return 10;
+  if([self isRunning] && runningSpriteSheet != nil)
+    return (runningTicks / (state == NekoStateWandering ? 3 : 2)) % 12;
   if(state == NekoStateSleeping)
     return 6 + (animationTicks / 10) % 4;
   if(fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1)
     return (animationTicks / 3) % 2 == 0 ? 1 : 3;
   if(sleepTicks >= SLEEP_DELAY / 2)
     return (animationTicks / 3) % 2 == 0 ? 2 : 4;
-  static const int idleFrames[] = { 0, 5, 10 };
-  return idleFrames[(animationTicks / 3) % 3];
+  static const int idleFrames[] = { 0, 5 };
+  return idleFrames[(animationTicks / 3) % 2];
 }
 
 - (void)drawCat
 {
   int frame = [self spriteFrame];
+  NSImage *sheet = ([self isRunning] && runningSpriteSheet != nil)
+                   ? runningSpriteSheet : spriteSheet;
   NSRect source = NSMakeRect((frame % 4) * SPRITE_SIZE,
                             (2 - frame / 4) * SPRITE_SIZE,
                             SPRITE_SIZE, SPRITE_SIZE);
@@ -312,13 +352,13 @@
   [[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationNone];
   [transform translateXBy: floor(catPosition.x) yBy: floor(catPosition.y)];
   // The side-facing poses in the source look left.
-  if(!facingLeft && fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1)
+  if(!facingLeft && [self isRunning])
     {
       [transform translateXBy: CAT_WIDTH yBy: 0];
       [transform scaleXBy: -1 yBy: 1];
     }
   [transform concat];
-  [spriteSheet drawInRect: NSMakeRect(0, 0, CAT_WIDTH, CAT_HEIGHT)
+  [sheet drawInRect: NSMakeRect(0, 0, CAT_WIDTH, CAT_HEIGHT)
                 fromRect: source operation: NSCompositeSourceOver fraction: 1.0];
   [NSGraphicsContext restoreGraphicsState];
 }
@@ -338,6 +378,10 @@
 	}
       [self updateWandering];
     }
+  else if(state == NekoStateSurprised)
+    {
+      [self updateSurprised];
+    }
   else if(state == NekoStateSleeping)
     {
       [self updateSleeping];
@@ -347,6 +391,9 @@
       state = NekoStateWalking;
       [self updateWalking];
     }
+
+  // Advance only on simulation steps; redraws must not change the pose.
+  runningTicks = [self isRunning] ? (runningTicks + 1) % 72 : 0;
 
   [[NSColor blackColor] set];
   NSRectFill([self bounds]);

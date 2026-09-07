@@ -76,6 +76,13 @@ Core Graphics adapter replaces the modules' Display PostScript calls. SignalHead
 draws each frame into the host bitmap, and Neko receives host window coordinates. GNUstep's
 Gorm files are not loaded by Cocoa.
 
+Neko uses 32×32 sprite frames rendered at 2× with nearest-neighbor scaling.
+Its twelve-frame running cycle follows the mouse and plays more slowly while
+wandering in full screen; idle, grooming, and sleeping use the original sheet.
+The normalized running asset is `Neko.bproj/neko_running_32.png`; the generated
+source is preserved alongside it. To regenerate the normalized asset, run
+`python3 Neko.bproj/tools/normalize-running.py` with Pillow installed.
+
 All 16 animations are available, with module selection and speed controls.
 The build discovers every `*.bproj` project from its GNUmakefile source and
 resource declarations, rather than maintaining a separate macOS module list.

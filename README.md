@@ -16,7 +16,7 @@ open build/InnerSpace.app
 ```
 
 You can also run `make run`, or copy `build/InnerSpace.app` into Applications.
-The app bundles all 16 animation modules. Select an animation, then choose
+The app bundles all 17 modules. Select an animation, then choose
 **Preview**, **Desktop**, or **Full Screen**. The last selected module and mode
 are saved as you change them and restored on the next launch. Desktop mode
 restarts quietly in the background, while Preview opens the controls and Full
@@ -83,12 +83,20 @@ The normalized running asset is `Neko.bproj/neko_running_32.png`; the generated
 source is preserved alongside it. To regenerate the normalized asset, run
 `python3 Neko.bproj/tools/normalize-running.py` with Pillow installed.
 
-All 16 animations are available, with module selection and speed controls.
+All 17 modules are available, with module selection and speed controls.
 The build discovers every `*.bproj` project from its GNUmakefile source and
 resource declarations, rather than maintaining a separate macOS module list.
 It includes Black, Boink, BouncyClock, Boxes, DictionaryWords, FlyingToasters,
 ItJustStopped, Kaleidoscope, Neko, NickSpace, Polyhedra, Qix, SignalHead,
-Space2View, SporView, and StepMan (including its image resource).
+Space2View, SporView, StepMan (including its image resource), and SystemStats.
+
+SystemStats displays CPU, memory, swap, disk, network, load, uptime, and process
+statistics on both Linux and macOS. The panel fades in at a random position,
+remains fully visible for 10–15 seconds, then fades out before appearing elsewhere.
+Each fade lasts two seconds, with a one-second gap between appearances.
+macOS thread counts include only processes
+that permit inspection; temperature displays as unavailable because macOS has
+no supported public Celsius-reading API.
 
 Native settings panels replace the remaining Gorm inspectors:
 

@@ -1,16 +1,41 @@
 #include "SystemStatsView.h"
 #include <sys/statvfs.h>
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <libproc.h>
+#else
 #include <dirent.h>
 #include <ctype.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define BYTES_PER_KIB 1024ULL
 #define PROC_LINE_LENGTH 512
 #define METER_HEIGHT 18.0
 #define ROW_HEIGHT 34.0
-#define PANEL_WIDTH 640.0
+#define PANEL_WIDTH 720.0
+#define PANEL_HEIGHT 310.0
+#define FADE_DURATION 2.0
+#define HIDDEN_DURATION 1.0
+
+static NSTimeInterval AnimationTime(void)
+{
+  struct timespec now;
+  clock_gettime(CLOCK_MONOTONIC, &now);
+  return now.tv_sec + now.tv_nsec / 1000000000.0;
+}
+
+static double RandomFraction(void)
+{
+  return (double)rand() / (double)RAND_MAX;
+}
 
 @implementation SystemStatsView
 
@@ -41,6 +66,10 @@
       uptimeSeconds = 0ULL;
       processCount = 0;
       threadCount = 0;
+      appearanceStartTime = AnimationTime();
+      visibleDuration = 10.0 + 5.0 * RandomFraction();
+      panelOpacity = 0.0;
+      [self placePanel];
       [self updateTextAttributes];
       [self sampleStats];
     }
@@ -99,7 +128,7 @@
 
 - (NSTimeInterval)animationDelayTime
 {
-  return 1.0;
+  return 1.0 / 30.0;
 }
 
 - (NSString *)windowTitle
@@ -109,6 +138,7 @@
 
 - (void)sampleStats
 {
+#if !defined(__APPLE__)
   FILE *file;
   char line[PROC_LINE_LENGTH];
   unsigned long long user;
@@ -125,6 +155,7 @@
   unsigned long long memAvailable;
   unsigned long long swapTotalValue;
   unsigned long long swapFree;
+#endif
   unsigned long long netRx;
   unsigned long long netTx;
   NSDate *now;
@@ -134,6 +165,63 @@
   now = [NSDate date];
   elapsed = (lastSampleDate == nil) ? 0.0 : [now timeIntervalSinceDate: lastSampleDate];
 
+#if defined(__APPLE__)
+  mach_port_t host = mach_host_self();
+  host_cpu_load_info_data_t cpu;
+  mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+
+  if(host_statistics(host, HOST_CPU_LOAD_INFO, (host_info_t)&cpu, &count) == KERN_SUCCESS)
+    {
+      unsigned long long total = 0ULL;
+      unsigned long long idle = cpu.cpu_ticks[CPU_STATE_IDLE];
+      int i;
+
+      for(i = 0; i < CPU_STATE_MAX; i++)
+        total += cpu.cpu_ticks[i];
+      if(previousCpuTotal != 0ULL && total > previousCpuTotal && idle >= previousCpuIdle)
+        {
+          unsigned long long totalDelta = total - previousCpuTotal;
+          unsigned long long idleDelta = idle - previousCpuIdle;
+
+          if(idleDelta <= totalDelta)
+            cpuPercent = 100.0 * (double)(totalDelta - idleDelta) / (double)totalDelta;
+        }
+      previousCpuTotal = total;
+      previousCpuIdle = idle;
+    }
+
+  uint64_t physicalMemory = 0;
+  size_t size = sizeof(physicalMemory);
+  vm_size_t pageSize;
+  vm_statistics64_data_t vm;
+  count = HOST_VM_INFO64_COUNT;
+  if(sysctlbyname("hw.memsize", &physicalMemory, &size, NULL, 0) == 0 &&
+     host_page_size(host, &pageSize) == KERN_SUCCESS &&
+     host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm, &count) == KERN_SUCCESS)
+    {
+      /* App memory, wired memory and compressed pages, excluding purgeable pages. */
+      unsigned long long usedPages = (unsigned long long)vm.active_count +
+        vm.inactive_count + vm.wire_count + vm.compressor_page_count;
+      unsigned long long reclaimablePages = (unsigned long long)vm.external_page_count +
+        vm.purgeable_count;
+
+      memoryTotal = physicalMemory;
+      memoryUsed = (usedPages > reclaimablePages) ?
+        (usedPages - reclaimablePages) * (unsigned long long)pageSize : 0ULL;
+      memoryUsed = MIN(memoryUsed, memoryTotal);
+      memoryPercent = memoryTotal ? 100.0 * (double)memoryUsed / (double)memoryTotal : 0.0;
+    }
+  mach_port_deallocate(mach_task_self(), host);
+
+  struct xsw_usage swap;
+  size = sizeof(swap);
+  if(sysctlbyname("vm.swapusage", &swap, &size, NULL, 0) == 0)
+    {
+      swapTotal = swap.xsu_total;
+      swapUsed = swap.xsu_used;
+      swapPercent = swapTotal ? 100.0 * (double)swapUsed / (double)swapTotal : 0.0;
+    }
+#else
   file = fopen("/proc/stat", "r");
   if(file != NULL)
     {
@@ -197,6 +285,8 @@
   swapUsed = (swapTotalValue > swapFree) ? (swapTotalValue - swapFree) : 0ULL;
   swapPercent = (swapTotalValue == 0ULL) ? 0.0 : (100.0 * (float)swapUsed / (float)swapTotalValue);
 
+#endif
+
   if(statvfs("/", &fs) == 0)
     {
       diskTotal = (unsigned long long)fs.f_blocks * (unsigned long long)fs.f_frsize;
@@ -205,6 +295,40 @@
     }
 
   netRx = netTx = 0ULL;
+#if defined(__APPLE__)
+  /* NET_RT_IFLIST2 supplies 64-bit counters, unlike getifaddrs' if_data. */
+  int mib[] = { CTL_NET, PF_ROUTE, 0, 0, NET_RT_IFLIST2, 0 };
+  size_t length = 0;
+  if(sysctl(mib, 6, NULL, &length, NULL, 0) == 0 && length > 0)
+    {
+      char *buffer = malloc(length);
+      if(buffer != NULL)
+        {
+          if(sysctl(mib, 6, buffer, &length, NULL, 0) == 0)
+            {
+              char *cursor = buffer;
+              char *end = buffer + length;
+              while((size_t)(end - cursor) >= sizeof(struct if_msghdr))
+                {
+                  struct if_msghdr *header = (struct if_msghdr *)cursor;
+                  if(header->ifm_msglen < sizeof(*header) || header->ifm_msglen > end - cursor)
+                    break;
+                  if(header->ifm_type == RTM_IFINFO2 && header->ifm_msglen >= sizeof(struct if_msghdr2))
+                    {
+                      struct if_msghdr2 *info = (struct if_msghdr2 *)cursor;
+                      if(!(info->ifm_flags & IFF_LOOPBACK))
+                        {
+                          netRx += info->ifm_data.ifi_ibytes;
+                          netTx += info->ifm_data.ifi_obytes;
+                        }
+                    }
+                  cursor += header->ifm_msglen;
+                }
+            }
+          free(buffer);
+        }
+    }
+#else
   file = fopen("/proc/net/dev", "r");
   if(file != NULL)
     {
@@ -231,6 +355,7 @@
 	}
       fclose(file);
     }
+#endif
   if(previousNetRx != 0ULL && elapsed > 0.0 && netRx >= previousNetRx && netTx >= previousNetTx)
     {
       netRxRate = (float)(netRx - previousNetRx) / (float)elapsed;
@@ -244,6 +369,11 @@
   previousNetRx = netRx;
   previousNetTx = netTx;
 
+#if defined(__APPLE__)
+  double load;
+  loadAverage1 = (getloadavg(&load, 1) == 1) ? load : 0.0;
+  uptimeSeconds = (unsigned long long)[[NSProcessInfo processInfo] systemUptime];
+#else
   loadAverage1 = 0.0;
   file = fopen("/proc/loadavg", "r");
   if(file != NULL)
@@ -265,6 +395,8 @@
       fclose(file);
     }
 
+#endif
+
   [self sampleProcessCounts];
   [self sampleTemperature];
   ASSIGN(lastSampleDate, now);
@@ -272,6 +404,32 @@
 
 - (void)sampleProcessCounts
 {
+#if defined(__APPLE__)
+  int bytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+  processCount = 0;
+  threadCount = 0;
+  if(bytes <= 0)
+    return;
+
+  /* Leave room for processes created between the size query and the snapshot. */
+  int capacity = bytes + 256 * sizeof(pid_t);
+  pid_t *pids = malloc(capacity);
+  if(pids == NULL)
+    return;
+  bytes = proc_listpids(PROC_ALL_PIDS, 0, pids, capacity);
+  int i;
+  for(i = 0; i < bytes / (int)sizeof(pid_t); i++)
+    {
+      struct proc_taskinfo task;
+      if(pids[i] <= 0)
+        continue;
+      processCount++;
+      /* Some processes may exit or deny inspection; count accessible threads. */
+      if(proc_pidinfo(pids[i], PROC_PIDTASKINFO, 0, &task, sizeof(task)) == sizeof(task))
+        threadCount += task.pti_threadnum;
+    }
+  free(pids);
+#else
   DIR *procDir;
   struct dirent *entry;
 
@@ -324,10 +482,15 @@
 	}
     }
   closedir(procDir);
+#endif
 }
 
 - (void)sampleTemperature
 {
+#if defined(__APPLE__)
+  /* macOS has no supported public API for a temperature in degrees Celsius. */
+  temperatureCelsius = -1.0;
+#else
   DIR *thermalDir;
   struct dirent *entry;
 
@@ -362,6 +525,7 @@
 	}
     }
   closedir(thermalDir);
+#endif
 }
 
 - (NSString *)sizeStringForBytes:(unsigned long long)bytes
@@ -397,19 +561,66 @@
   return [NSString stringWithFormat: @"%lluh %llum", hours, minutes];
 }
 
+- (void)placePanel
+{
+  NSRect bounds = [self bounds];
+  CGFloat margin = MIN(24.0, MIN(bounds.size.width, bounds.size.height) / 10.0);
+  CGFloat scale = MAX(0.0, MIN(1.0, MIN((bounds.size.width - 2.0 * margin) / PANEL_WIDTH,
+                                      (bounds.size.height - 2.0 * margin) / PANEL_HEIGHT)));
+  NSSize size = NSMakeSize(PANEL_WIDTH * scale, PANEL_HEIGHT * scale);
+  panelFrame = NSMakeRect(NSMinX(bounds) + margin + RandomFraction() * MAX(0.0, bounds.size.width - 2.0 * margin - size.width),
+                          NSMinY(bounds) + margin + RandomFraction() * MAX(0.0, bounds.size.height - 2.0 * margin - size.height),
+                          size.width, size.height);
+  animationBounds = bounds;
+}
+
+- (void)updateAnimationAtTime:(NSTimeInterval)time
+{
+  NSTimeInterval elapsed = MAX(0.0, time - appearanceStartTime);
+  if(elapsed >= 2.0 * FADE_DURATION + visibleDuration + HIDDEN_DURATION)
+    {
+      appearanceStartTime = time;
+      visibleDuration = 10.0 + 5.0 * RandomFraction();
+      elapsed = 0.0;
+      [self placePanel];
+    }
+  if(!NSEqualRects(animationBounds, [self bounds]))
+    [self placePanel];
+
+  if(elapsed < FADE_DURATION)
+    panelOpacity = elapsed / FADE_DURATION;
+  else if(elapsed < FADE_DURATION + visibleDuration)
+    panelOpacity = 1.0;
+  else if(elapsed < 2.0 * FADE_DURATION + visibleDuration)
+    panelOpacity = 1.0 - (elapsed - FADE_DURATION - visibleDuration) / FADE_DURATION;
+  else
+    panelOpacity = 0.0;
+}
+
 - (void)drawRect:(NSRect)rects
 {
   [[NSColor blackColor] set];
   NSRectFill(rects);
+  if(panelOpacity <= 0.0 || panelFrame.size.width <= 0.0)
+    return;
+
+  [NSGraphicsContext saveGraphicsState];
+  NSRectClip([self bounds]);
+  NSAffineTransform *transform = [NSAffineTransform transform];
+  [transform translateXBy:panelFrame.origin.x yBy:panelFrame.origin.y];
+  [transform scaleBy:panelFrame.size.width / PANEL_WIDTH];
+  [transform concat];
   [self drawStats];
+  /* Fade the entire panel uniformly against the black background on both hosts. */
+  [[NSColor colorWithCalibratedWhite:0.0 alpha:1.0 - panelOpacity] set];
+  NSRectFillUsingOperation(NSMakeRect(0, 0, PANEL_WIDTH, PANEL_HEIGHT), NSCompositeSourceOver);
+  [NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)drawStats
 {
-  NSRect bounds = [self bounds];
-  float panelWidth = MIN(PANEL_WIDTH, bounds.size.width - 48.0);
-  float startX = (bounds.size.width - panelWidth) / 2.0;
-  float y = bounds.size.height - 74.0;
+  float startX = 0.0;
+  float y = PANEL_HEIGHT - 42.0;
   NSString *subtitle;
   NSString *cpuValue;
   NSString *memoryValue;
@@ -417,12 +628,6 @@
   NSString *diskValue;
   NSString *netValue;
   NSString *otherValue;
-
-  if(panelWidth < 260.0)
-    {
-      panelWidth = bounds.size.width - 20.0;
-      startX = 10.0;
-    }
 
   [@"System Stats" drawAtPoint: NSMakePoint(startX, y) withAttributes: titleAttributes];
   y -= 28.0;
@@ -486,23 +691,14 @@
 	     percent:(float)percent
 	      color:(NSColor *)color
 {
-  NSRect bounds = [self bounds];
-  float panelWidth = MIN(PANEL_WIDTH, bounds.size.width - 48.0);
-  float startX = (bounds.size.width - panelWidth) / 2.0;
+  float panelWidth = PANEL_WIDTH;
+  float startX = 0.0;
   float labelWidth = 110.0;
-  float valueWidth = 250.0;
+  float valueWidth = 310.0;
   float meterX;
   float meterWidth;
   NSRect meterRect;
   NSRect fillRect;
-
-  if(panelWidth < 260.0)
-    {
-      panelWidth = bounds.size.width - 20.0;
-      startX = 10.0;
-      labelWidth = 82.0;
-      valueWidth = 160.0;
-    }
 
   meterX = startX + labelWidth;
   meterWidth = panelWidth - labelWidth - valueWidth - 12.0;
@@ -548,9 +744,17 @@
 
 - (void)oneStep
 {
-  [self sampleStats];
+  /* Rendering runs smoothly while expensive system queries stay at one Hz. */
+  if(lastSampleDate == nil || -[lastSampleDate timeIntervalSinceNow] >= 1.0)
+    [self sampleStats];
+  [self updateAnimationAtTime:AnimationTime()];
+#if defined(__APPLE__) && !defined(GNUSTEP)
+  /* The Cocoa host supplies the bitmap context for each animation step. */
+  [self drawRect: [self bounds]];
+#else
   [self setNeedsDisplay: YES];
   [self display];
+#endif
 }
 
 @end

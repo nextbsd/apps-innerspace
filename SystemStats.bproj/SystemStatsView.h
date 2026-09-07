@@ -28,6 +28,11 @@
   unsigned long long uptimeSeconds;
   int processCount;
   int threadCount;
+  NSRect panelFrame;
+  NSRect animationBounds;
+  NSTimeInterval appearanceStartTime;
+  NSTimeInterval visibleDuration;
+  float panelOpacity;
 }
 - (void)oneStep;
 - (void)updateTextAttributes;
@@ -35,6 +40,8 @@
 - (void)sampleProcessCounts;
 - (void)sampleTemperature;
 - (void)drawStats;
+- (void)placePanel;
+- (void)updateAnimationAtTime:(NSTimeInterval)time;
 - (NSString *)uptimeString;
 - (void)drawMeterAtY:(float)y
 	       label:(NSString *)label

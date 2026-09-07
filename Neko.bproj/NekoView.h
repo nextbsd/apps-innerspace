@@ -15,7 +15,8 @@ typedef enum {
   NSPoint wanderTarget;
   NekoState state;
   int sleepTicks;
-  int blinkTicks;
+  int animationTicks;
+  NSImage *spriteSheet;
   BOOL facingLeft;
   BOOL saverMode;
 }

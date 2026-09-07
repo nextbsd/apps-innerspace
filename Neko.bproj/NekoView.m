@@ -3,8 +3,9 @@
 #include <stdlib.h>
 
 #define RAND_FLOAT ((float)rand() / (float)RAND_MAX)
-#define CAT_WIDTH 54.0
-#define CAT_HEIGHT 38.0
+#define SPRITE_SIZE 32
+#define CAT_WIDTH 64.0
+#define CAT_HEIGHT 64.0
 #define WALK_SPEED 9.0
 #define WANDER_SPEED 4.0
 #define FOUND_DISTANCE 18.0
@@ -26,7 +27,8 @@
       wanderTarget = catPosition;
       state = NekoStateWalking;
       sleepTicks = 0;
-      blinkTicks = 0;
+      animationTicks = 0;
+      [self loadSpriteSheet];
       facingLeft = NO;
       saverMode = NO;
       srand((unsigned int)[[NSDate date] timeIntervalSince1970]);
@@ -245,100 +247,85 @@
   [self drawCat];
 }
 
-- (void)drawEarAt:(NSPoint)base left:(BOOL)left
+// Frames are numbered left-to-right, top-to-bottom in the 4 by 3 sheet.
+- (void)loadSpriteSheet
 {
-  NSBezierPath *ear = [NSBezierPath bezierPath];
-  float dir = left ? -1.0 : 1.0;
+  NSString *path = [[NSBundle bundleForClass: [NekoView class]]
+                    pathForResource: @"neko_animation_steps" ofType: @"png"];
+  NSData *data = path ? [NSData dataWithContentsOfFile: path] : nil;
+  NSBitmapImageRep *source = data ? [NSBitmapImageRep imageRepWithData: data] : nil;
+  if(source == nil || [source pixelsWide] != 128 || [source pixelsHigh] != 96)
+    {
+      NSLog(@"Neko: missing or invalid neko_animation_steps.png (expected 128x96)");
+      return;
+    }
 
-  [ear moveToPoint: NSMakePoint(base.x, base.y)];
-  [ear lineToPoint: NSMakePoint(base.x + (dir * 8.0), base.y + 16.0)];
-  [ear lineToPoint: NSMakePoint(base.x + (dir * 16.0), base.y)];
-  [ear closePath];
-  [[NSColor colorWithCalibratedRed: 0.92 green: 0.90 blue: 0.82 alpha: 1.0] set];
-  [ear fill];
-  [[NSColor blackColor] set];
-  [ear stroke];
+  // Keep the supplied asset intact; remove only its red color key at load time.
+  NSBitmapImageRep *rgba = [[NSBitmapImageRep alloc]
+    initWithBitmapDataPlanes: NULL pixelsWide: 128 pixelsHigh: 96
+    bitsPerSample: 8 samplesPerPixel: 4 hasAlpha: YES isPlanar: NO
+    colorSpaceName: NSDeviceRGBColorSpace bytesPerRow: 0 bitsPerPixel: 0];
+  int x, y;
+  for(y = 0; y < 96; y++)
+    {
+      for(x = 0; x < 128; x++)
+        {
+          NSColor *color = [[source colorAtX: x y: y]
+                            colorUsingColorSpaceName: NSDeviceRGBColorSpace];
+          if([color redComponent] > 0.99 &&
+             [color greenComponent] < 0.01 && [color blueComponent] < 0.01)
+            color = [NSColor clearColor];
+          [rgba setColor: color atX: x y: y];
+        }
+    }
+  spriteSheet = [[NSImage alloc] initWithSize: NSMakeSize(128, 96)];
+  [spriteSheet addRepresentation: rgba];
+  [rgba release];
+}
+
+- (void)dealloc
+{
+  [spriteSheet release];
+  [super dealloc];
+}
+
+- (int)spriteFrame
+{
+  if(state == NekoStateSleeping)
+    return 6 + (animationTicks / 10) % 4;
+  if(fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1)
+    return (animationTicks / 3) % 2 == 0 ? 1 : 3;
+  if(sleepTicks >= SLEEP_DELAY / 2)
+    return (animationTicks / 3) % 2 == 0 ? 2 : 4;
+  static const int idleFrames[] = { 0, 5, 10 };
+  return idleFrames[(animationTicks / 3) % 3];
 }
 
 - (void)drawCat
 {
-  NSRect body = NSMakeRect(catPosition.x + 8.0, catPosition.y + 2.0, 36.0, 22.0);
-  NSRect head = NSMakeRect(catPosition.x + 12.0, catPosition.y + 18.0, 30.0, 22.0);
-  NSBezierPath *tail;
-  NSBezierPath *mouth;
-  NSString *sleepText;
-  NSDictionary *attrs;
-  float eyeY = catPosition.y + 29.0;
-  float leftEyeX = catPosition.x + 22.0;
-  float rightEyeX = catPosition.x + 32.0;
-  float tailBaseX = facingLeft ? catPosition.x + 11.0 : catPosition.x + 43.0;
-  float tailTipX = facingLeft ? catPosition.x + 1.0 : catPosition.x + 53.0;
-  float legOffset = (fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1 && blinkTicks % 10 < 5) ? 3.0 : 0.0;
-
-  [[NSColor colorWithCalibratedRed: 0.92 green: 0.90 blue: 0.82 alpha: 1.0] set];
-  [[NSBezierPath bezierPathWithOvalInRect: body] fill];
-  [[NSBezierPath bezierPathWithOvalInRect: head] fill];
-
-  [self drawEarAt: NSMakePoint(catPosition.x + 21.0, catPosition.y + 34.0) left: YES];
-  [self drawEarAt: NSMakePoint(catPosition.x + 33.0, catPosition.y + 34.0) left: NO];
-
-  [[NSColor colorWithCalibratedRed: 0.73 green: 0.55 blue: 0.32 alpha: 1.0] set];
-  NSRectFill(NSMakeRect(catPosition.x + 20.0, catPosition.y + 36.0, 5.0, 2.0));
-  NSRectFill(NSMakeRect(catPosition.x + 29.0, catPosition.y + 36.0, 5.0, 2.0));
-  NSRectFill(NSMakeRect(catPosition.x + 26.0, catPosition.y + 20.0, 4.0, 15.0));
-
-  tail = [NSBezierPath bezierPath];
-  [tail setLineWidth: 5.0];
-  [tail moveToPoint: NSMakePoint(tailBaseX, catPosition.y + 13.0)];
-  [tail curveToPoint: NSMakePoint(tailTipX, catPosition.y + 31.0)
-       controlPoint1: NSMakePoint(tailTipX, catPosition.y + 13.0)
-       controlPoint2: NSMakePoint(tailTipX, catPosition.y + 28.0)];
-  [[NSColor colorWithCalibratedRed: 0.92 green: 0.90 blue: 0.82 alpha: 1.0] set];
-  [tail stroke];
-
-  [[NSColor blackColor] set];
-  NSRectFill(NSMakeRect(catPosition.x + 16.0, catPosition.y + 1.0 + legOffset, 6.0, 4.0));
-  NSRectFill(NSMakeRect(catPosition.x + 34.0, catPosition.y + 1.0 - legOffset, 6.0, 4.0));
-
-  if(state == NekoStateSleeping)
+  int frame = [self spriteFrame];
+  NSRect source = NSMakeRect((frame % 4) * SPRITE_SIZE,
+                            (2 - frame / 4) * SPRITE_SIZE,
+                            SPRITE_SIZE, SPRITE_SIZE);
+  NSAffineTransform *transform = [NSAffineTransform transform];
+  [NSGraphicsContext saveGraphicsState];
+  [[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationNone];
+  [transform translateXBy: floor(catPosition.x) yBy: floor(catPosition.y)];
+  // The side-facing poses in the source look left.
+  if(!facingLeft && fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1)
     {
-      NSRectFill(NSMakeRect(leftEyeX - 3.0, eyeY, 6.0, 1.5));
-      NSRectFill(NSMakeRect(rightEyeX - 3.0, eyeY, 6.0, 1.5));
+      [transform translateXBy: CAT_WIDTH yBy: 0];
+      [transform scaleXBy: -1 yBy: 1];
     }
-  else
-    {
-      [[NSBezierPath bezierPathWithOvalInRect:
-			 NSMakeRect(leftEyeX - 2.0, eyeY - 2.0, 4.0, 4.0)] fill];
-      [[NSBezierPath bezierPathWithOvalInRect:
-			 NSMakeRect(rightEyeX - 2.0, eyeY - 2.0, 4.0, 4.0)] fill];
-    }
-
-  NSRectFill(NSMakeRect(catPosition.x + 27.0, catPosition.y + 24.0, 3.0, 2.0));
-  mouth = [NSBezierPath bezierPath];
-  [mouth setLineWidth: 1.0];
-  [mouth moveToPoint: NSMakePoint(catPosition.x + 28.0, catPosition.y + 24.0)];
-  [mouth lineToPoint: NSMakePoint(catPosition.x + 24.0, catPosition.y + 21.0)];
-  [mouth moveToPoint: NSMakePoint(catPosition.x + 29.0, catPosition.y + 24.0)];
-  [mouth lineToPoint: NSMakePoint(catPosition.x + 33.0, catPosition.y + 21.0)];
-  [mouth stroke];
-
-  if(state == NekoStateSleeping)
-    {
-      sleepText = @"Z";
-      attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-			      [NSFont boldSystemFontOfSize: 14.0], NSFontAttributeName,
-			      [NSColor whiteColor], NSForegroundColorAttributeName,
-			      nil];
-      [sleepText drawAtPoint: NSMakePoint(catPosition.x + 43.0,
-					  catPosition.y + 34.0)
-	      withAttributes: attrs];
-    }
-
-  blinkTicks++;
+  [transform concat];
+  [spriteSheet drawInRect: NSMakeRect(0, 0, CAT_WIDTH, CAT_HEIGHT)
+                fromRect: source operation: NSCompositeSourceOver fraction: 1.0];
+  [NSGraphicsContext restoreGraphicsState];
 }
 
 - (void)oneStep
 {
+  animationTicks = (animationTicks + 1) % 120;
   [self updateSaverMode];
 
   if(saverMode)

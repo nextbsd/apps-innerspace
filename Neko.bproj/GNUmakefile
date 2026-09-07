@@ -6,6 +6,7 @@ BUNDLE_NAME = Neko
 BUNDLE_EXTENSION = .InnerSpace
 
 Neko_OBJC_FILES = NekoView.m
+Neko_RESOURCE_FILES = neko_animation_steps.png
 Neko_PRINCIPAL_CLASS = NekoView
 Neko_STANDARD_INSTALL = no
 

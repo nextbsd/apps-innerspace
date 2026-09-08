@@ -6,11 +6,11 @@
 #define SPRITE_SIZE 32
 #define CAT_WIDTH 64.0
 #define CAT_HEIGHT 64.0
-#define WALK_SPEED 9.0
-#define WANDER_SPEED 4.0
+#define WALK_SPEED 6.0
+#define WANDER_SPEED 3.0
 #define FOUND_DISTANCE 18.0
 #define SLEEP_DELAY 18
-#define SURPRISE_DELAY 10 // About 0.55 seconds at the default animation speed.
+#define SURPRISE_DELAY 45 // About 2.5 seconds at the default animation speed.
 #define WAKE_DELAY 90
 
 @implementation NekoView
@@ -328,7 +328,7 @@
   if(state == NekoStateSurprised)
     return 10;
   if([self isRunning] && runningSpriteSheet != nil)
-    return (runningTicks / (state == NekoStateWandering ? 3 : 2)) % 12;
+    return (runningTicks / (state == NekoStateWandering ? 4 : 3)) % 12;
   if(state == NekoStateSleeping)
     return 6 + (animationTicks / 10) % 4;
   if(fabs(catVelocity.x) + fabs(catVelocity.y) > 0.1)
@@ -393,7 +393,7 @@
     }
 
   // Advance only on simulation steps; redraws must not change the pose.
-  runningTicks = [self isRunning] ? (runningTicks + 1) % 72 : 0;
+  runningTicks = [self isRunning] ? (runningTicks + 1) % 144 : 0;
 
   [[NSColor blackColor] set];
   NSRectFill([self bounds]);

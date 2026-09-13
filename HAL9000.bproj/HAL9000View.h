@@ -2,25 +2,17 @@
 
 @interface HAL9000View : NSView
 {
-  float phase;
-  int frameCount;
-  int screenMode;
-  NSDictionary *titleAttributes;
-  NSDictionary *labelAttributes;
+  double phase;
+  unsigned int frameCount;
   NSDictionary *smallAttributes;
-  NSDictionary *greenAttributes;
-  NSDictionary *amberAttributes;
+  NSDictionary *titleAttributes;
 }
 - (void)oneStep;
 - (void)drawDisplayInRect:(NSRect)rect;
-- (void)drawPanelAtRow:(int)row column:(int)column inRect:(NSRect)rect;
+- (void)drawMonitor:(int)index inRect:(NSRect)rect;
+- (void)drawGraphic:(int)kind;
 - (void)drawHalEyeInRect:(NSRect)rect;
-- (void)drawStatusMatrixInRect:(NSRect)rect;
-- (void)drawSignalTraceInRect:(NSRect)rect;
-- (void)drawScanLinesInRect:(NSRect)rect;
 @end
 
 @interface StaticHAL9000View : HAL9000View
-{
-}
 @end

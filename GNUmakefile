@@ -57,6 +57,7 @@ Boink.bproj/Boink.InnerSpace \
 BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
+HAL9000.bproj/HAL9000.InnerSpace \
 SystemStats.bproj/SystemStats.InnerSpace \
 DictionaryWords.bproj/DictionaryWords.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
@@ -107,6 +108,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 
 SUBPROJECTS = Black.bproj Boxes.bproj SystemStats.bproj \
 	Boink.bproj \
+	HAL9000.bproj \
 	DictionaryWords.bproj \
         BouncyClock.bproj \
         FlyingToasters.bproj \

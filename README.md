@@ -16,7 +16,7 @@ open build/InnerSpace.app
 ```
 
 You can also run `make run`, or copy `build/InnerSpace.app` into Applications.
-The app bundles all 17 modules. Select an animation, then choose
+The app bundles all 19 modules. Select an animation, then choose
 **Preview**, **Desktop**, or **Full Screen**. The last selected module and mode
 are saved as you change them and restored on the next launch. Desktop mode
 restarts quietly in the background, while Preview opens the controls and Full
@@ -83,12 +83,19 @@ The normalized running asset is `Neko.bproj/neko_running_32.png`; the generated
 source is preserved alongside it. To regenerate the normalized asset, run
 `python3 Neko.bproj/tools/normalize-running.py` with Pillow installed.
 
-All 17 modules are available, with module selection and speed controls.
+All 19 modules are available, with module selection and speed controls.
 The build discovers every `*.bproj` project from its GNUmakefile source and
 resource declarations, rather than maintaining a separate macOS module list.
-It includes Black, Boink, BouncyClock, Boxes, DictionaryWords, FlyingToasters,
+It includes Aquarium, Black, Boink, BouncyClock, Boxes, DictionaryWords, FlyingToasters, HAL9000,
 ItJustStopped, Kaleidoscope, Neko, NickSpace, Polyhedra, Qix, SignalHead,
 Space2View, SporView, StepMan (including its image resource), and SystemStats.
+
+Aquarium fills the screen with tropical fish, swaying aquatic plants, gravel,
+rocks, rising bubbles, and slowly drifting underwater light. Three fish designs
+swim in both directions with animated fins and tails. The scene scales to the
+window, with more fish in wider tanks. All artwork is drawn natively, with no
+downloads or external assets required. Select **Aquarium** in the module menu
+and use the standard speed and Preview/Desktop/Full Screen controls.
 
 SystemStats displays CPU, memory, swap, disk, network, load, uptime, and process
 statistics on both Linux and macOS. The panel fades in at a random position,

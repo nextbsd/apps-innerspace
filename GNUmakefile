@@ -53,6 +53,7 @@ ADDITIONAL_GUI_LIBS +=
 InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
 InnerSpace_Icon.icns \
+Aquarium.bproj/Aquarium.InnerSpace \
 Boink.bproj/Boink.InnerSpace \
 BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
@@ -106,7 +107,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Black.bproj Boxes.bproj SystemStats.bproj \
+SUBPROJECTS = Aquarium.bproj Black.bproj Boxes.bproj SystemStats.bproj \
 	Boink.bproj \
 	HAL9000.bproj \
 	DictionaryWords.bproj \

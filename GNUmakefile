@@ -54,6 +54,7 @@ InnerSpace_RESOURCE_FILES= \
 InnerSpace.tiff \
 InnerSpace_Icon.icns \
 Aquarium.bproj/Aquarium.InnerSpace \
+ConnectionMachine.bproj/ConnectionMachine.InnerSpace \
 Boink.bproj/Boink.InnerSpace \
 BouncyClock.bproj/BouncyClock.InnerSpace \
 Black.bproj/Black.InnerSpace \
@@ -107,7 +108,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Aquarium.bproj Black.bproj Boxes.bproj SystemStats.bproj \
+SUBPROJECTS = Aquarium.bproj ConnectionMachine.bproj Black.bproj Boxes.bproj SystemStats.bproj \
 	Boink.bproj \
 	HAL9000.bproj \
 	DictionaryWords.bproj \

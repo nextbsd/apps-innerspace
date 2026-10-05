@@ -16,7 +16,7 @@ open build/InnerSpace.app
 ```
 
 You can also run `make run`, or copy `build/InnerSpace.app` into Applications.
-The app bundles all 19 modules. Select an animation, then choose
+The app bundles all 20 modules. Select an animation, then choose
 **Preview**, **Desktop**, or **Full Screen**. The last selected module and mode
 are saved as you change them and restored on the next launch. Desktop mode
 restarts quietly in the background, while Preview opens the controls and Full
@@ -83,10 +83,10 @@ The normalized running asset is `Neko.bproj/neko_running_32.png`; the generated
 source is preserved alongside it. To regenerate the normalized asset, run
 `python3 Neko.bproj/tools/normalize-running.py` with Pillow installed.
 
-All 19 modules are available, with module selection and speed controls.
+All 20 modules are available, with module selection and speed controls.
 The build discovers every `*.bproj` project from its GNUmakefile source and
 resource declarations, rather than maintaining a separate macOS module list.
-It includes Aquarium, Black, Boink, BouncyClock, Boxes, DictionaryWords, FlyingToasters, HAL9000,
+It includes Aquarium, Black, Boink, BouncyClock, Boxes, ConnectionMachine, DictionaryWords, FlyingToasters, HAL9000,
 ItJustStopped, Kaleidoscope, Neko, NickSpace, Polyhedra, Qix, SignalHead,
 Space2View, SporView, StepMan (including its image resource), and SystemStats.
 
@@ -96,6 +96,19 @@ swim in both directions with animated fins and tails. The scene scales to the
 window, with more fish in wider tanks. All artwork is drawn natively, with no
 downloads or external assets required. Select **Aquarium** in the module menu
 and use the standard speed and Preview/Desktop/Full Screen controls.
+
+ConnectionMachine presents eight matte-black panels with 4,096 red LEDs, inspired
+by the Connection Machine's processor-status lights. Six panels map rows to the
+computer's logical CPU cores (repeating cores across the array); the remaining
+two show network receive and transmit activity. CPU LED duty cycle follows busy
+time, while network activity uses a fixed logarithmic scale up to 1 MiB/s.
+Counters are sampled every half-second using monotonic time, independently of
+the animation-speed slider. The readout shows measured CPU use and KiB/s. The
+spatial flicker is a visualization of these measurements, not a trace of
+individual instructions or packets. Loopback traffic is excluded; virtual
+interfaces may count traffic again. Unsupported or failed readings are labeled
+unavailable and their lights fade out. Sampling uses public, unprivileged macOS
+APIs or Linux /proc files; it includes InnerSpace's own activity.
 
 SystemStats displays CPU, memory, swap, disk, network, load, uptime, and process
 statistics on both Linux and macOS. The panel fades in at a random position,

@@ -16,7 +16,7 @@ open build/InnerSpace.app
 ```
 
 You can also run `make run`, or copy `build/InnerSpace.app` into Applications.
-The app bundles all 20 modules. Select an animation, then choose
+The app bundles all 21 modules. Select an animation, then choose
 **Preview**, **Desktop**, or **Full Screen**. The last selected module and mode
 are saved as you change them and restored on the next launch. Desktop mode
 restarts quietly in the background, while Preview opens the controls and Full
@@ -83,12 +83,12 @@ The normalized running asset is `Neko.bproj/neko_running_32.png`; the generated
 source is preserved alongside it. To regenerate the normalized asset, run
 `python3 Neko.bproj/tools/normalize-running.py` with Pillow installed.
 
-All 20 modules are available, with module selection and speed controls.
+All 21 modules are available, with module selection and speed controls.
 The build discovers every `*.bproj` project from its GNUmakefile source and
 resource declarations, rather than maintaining a separate macOS module list.
 It includes Aquarium, Black, Boink, BouncyClock, Boxes, ConnectionMachine, DictionaryWords, FlyingToasters, HAL9000,
 ItJustStopped, Kaleidoscope, Neko, NickSpace, Polyhedra, Qix, SignalHead,
-Space2View, SporView, StepMan (including its image resource), and SystemStats.
+Space2View, SporView, StepMan (including its image resource), SystemStats, and Weather.
 
 Aquarium fills the screen with tropical fish, swaying aquatic plants, gravel,
 rocks, rising bubbles, and slowly drifting underwater light. Three fish designs
@@ -119,6 +119,50 @@ against the peak observed during the session (with a minimum scale of 1 KiB/s).
 macOS thread counts include only processes
 that permit inspection; temperature displays as unavailable because macOS has
 no supported public Celsius-reading API.
+
+Weather shows current temperature (°C or °F), humidity, wind speed (km/h), weather
+conditions, and the observation/model timestamp, alongside a simplified
+world map with a location marker. Select **Weather**, then enter latitude and
+longitude in its inspector and choose **Apply and Refresh**, or press Enter in
+either coordinate field to apply the values while keeping keyboard focus. Toggle **Use Fahrenheit
+(°F)** to switch temperature units immediately; unchecked uses Celsius. This choice
+is saved across launches and does not require another weather request. Coordinates persist
+across launches; the initial location is New York (40.7128, -74.0060). The map is
+a native, offline geographic overview with approximate coastlines, not radar or
+street-level mapping.
+
+Weather requests run on a worker queue over HTTPS, refresh every 15 minutes, and
+retry after five minutes on failure. DNS and connection setup stay off the UI
+thread so applying coordinates does not wait for the network. Responses for
+previous locations are ignored after a new location is applied. Failed updates keep the previous reading
+with a status message and timestamp; changing location clears it. No API key or
+location permission is needed. The module sends the selected coordinates directly
+to [Open-Meteo](https://open-meteo.com/en/docs) for model-based current conditions,
+requesting Celsius and km/h explicitly. It no longer selects an NWS station:
+individual stations can have missing measurements even in a successful response.
+The footer identifies Open-Meteo, and successful updates are explicitly labeled.
+HTTP and connection errors appear in the status line to help distinguish a failed
+request from missing data. Responses missing required measurements are rejected;
+a failed refresh preserves the previous complete reading with its timestamp.
+Open-Meteo data is provided under [CC BY 4.0](https://open-meteo.com/en/licence);
+the free endpoint is for [non-commercial use](https://open-meteo.com/en/terms).
+
+The Weather module can be built independently with `make -C Weather.bproj`.
+Its offline regression tests cover response validation, retaining readings on
+failure, invalid coordinates, direct provider selection, recovery after errors,
+slow-network responsiveness, ignoring superseded requests, Enter-key editing in
+both coordinate fields, and rendering. On GNUstep with an X display:
+
+```sh
+clang $(gnustep-config --objc-flags) Weather.bproj/WeatherView.m \
+  Weather.bproj/Tests/WeatherTests.m -o /tmp/innerspace-weather-tests \
+  $(gnustep-config --gui-libs)
+/tmp/innerspace-weather-tests
+```
+
+Use `--headless` to run only the data and provider checks without an X display.
+For GUI checks on a headless system, run with `xvfb-run -a`. It writes a
+render sample to `/tmp/innerspace-weather-test.png` and does not use the network.
 
 Native settings panels replace the remaining Gorm inspectors:
 

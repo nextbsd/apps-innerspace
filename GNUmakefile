@@ -61,6 +61,7 @@ Black.bproj/Black.InnerSpace \
 Boxes.bproj/Boxes.InnerSpace \
 HAL9000.bproj/HAL9000.InnerSpace \
 SystemStats.bproj/SystemStats.InnerSpace \
+Weather.bproj/Weather.InnerSpace \
 DictionaryWords.bproj/DictionaryWords.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
 Kaleidoscope.bproj/Kaleidoscope.InnerSpace \
@@ -108,7 +109,7 @@ InnerSpace_C_FILES= UtilFunctions.c
 # Subprojects
 #
 
-SUBPROJECTS = Aquarium.bproj ConnectionMachine.bproj Black.bproj Boxes.bproj SystemStats.bproj \
+SUBPROJECTS = Weather.bproj Aquarium.bproj ConnectionMachine.bproj Black.bproj Boxes.bproj SystemStats.bproj \
 	Boink.bproj \
 	HAL9000.bproj \
 	DictionaryWords.bproj \

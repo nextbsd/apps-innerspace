@@ -6,6 +6,7 @@
 
 
 #import "Space2View.h"
+#import "Space2GLView.h"
 #import <Foundation/Foundation.h>
 #import <AppKit/PSOperators.h>
 #import <AppKit/AppKit.h>
@@ -140,6 +141,9 @@ float randBetween(float lower, float upper)
   int i;
 
   for (i = 0; i < MAXNEBULAE; i++) RELEASE(nebulae[i].image);
+  [self stopGPU];
+  RELEASE(gpuStatus);
+  RELEASE(cpuCloudLayer);
   RELEASE(inspectorView);
   DEALLOC;
 }
@@ -152,9 +156,9 @@ float randBetween(float lower, float upper)
       NSPopUpButton *popup;
       NSButton *checkbox;
 
-      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 220, 200)];
+      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 220, 260)];
       label = AUTORELEASE([[NSTextField alloc]
-        initWithFrame: NSMakeRect(10, 172, 200, 20)]);
+        initWithFrame: NSMakeRect(10, 232, 200, 20)]);
       [label setStringValue: @"Star color"];
       [label setEditable: NO];
       [label setSelectable: NO];
@@ -162,7 +166,7 @@ float randBetween(float lower, float upper)
       [label setDrawsBackground: NO];
       [inspectorView addSubview: label];
       popup = AUTORELEASE([[NSPopUpButton alloc]
-        initWithFrame: NSMakeRect(10, 140, 200, 26) pullsDown: NO]);
+        initWithFrame: NSMakeRect(10, 200, 200, 26) pullsDown: NO]);
       [popup addItemsWithTitles: [NSArray arrayWithObjects:
         @"White", @"Random", @"Blue", @"Red", @"Blue-white", @"Yellow", @"Orange", nil]];
       [popup selectItemAtIndex: starColor];
@@ -170,7 +174,7 @@ float randBetween(float lower, float upper)
       [popup setAction: @selector(setStarColor:)];
       [inspectorView addSubview: popup];
       checkbox = AUTORELEASE([[NSButton alloc]
-        initWithFrame: NSMakeRect(10, 109, 200, 24)]);
+        initWithFrame: NSMakeRect(10, 169, 200, 24)]);
       [checkbox setButtonType: NSSwitchButton];
       [checkbox setTitle: @"Show moving nebulae"];
       [checkbox setState: showsNebula ? NSOnState : NSOffState];
@@ -178,7 +182,7 @@ float randBetween(float lower, float upper)
       [checkbox setAction: @selector(setShowsNebula:)];
       [inspectorView addSubview: checkbox];
       checkbox = AUTORELEASE([[NSButton alloc]
-        initWithFrame: NSMakeRect(10, 79, 200, 24)]);
+        initWithFrame: NSMakeRect(10, 139, 200, 24)]);
       [checkbox setButtonType: NSSwitchButton];
       [checkbox setTitle: @"Rotate space view"];
       [checkbox setState: rotatesSpace ? NSOnState : NSOffState];
@@ -186,16 +190,25 @@ float randBetween(float lower, float upper)
       [checkbox setAction: @selector(setRotatesSpace:)];
       [inspectorView addSubview: checkbox];
       checkbox = AUTORELEASE([[NSButton alloc]
-        initWithFrame: NSMakeRect(10, 49, 200, 24)]);
+        initWithFrame: NSMakeRect(10, 109, 200, 24)]);
       [checkbox setButtonType: NSSwitchButton];
       [checkbox setTitle: @"COSMOS mode"];
       [checkbox setState: cosmosMode ? NSOnState : NSOffState];
       [checkbox setTarget: self];
       [checkbox setAction: @selector(setCosmosMode:)];
       [inspectorView addSubview: checkbox];
+      checkbox = AUTORELEASE([[NSButton alloc]
+        initWithFrame: NSMakeRect(10, 79, 200, 24)]);
+      [checkbox setButtonType: NSSwitchButton];
+      [checkbox setTitle: @"Use GPU rendering"];
+      [checkbox setState: gpuEnabled ? NSOnState : NSOffState];
+      [checkbox setTarget: self];
+      [checkbox setAction: @selector(setUsesGPU:)];
+      [inspectorView addSubview: checkbox];
       label = AUTORELEASE([[NSTextField alloc]
-        initWithFrame: NSMakeRect(10, 4, 200, 40)]);
-      [label setStringValue: @"COSMOS: slow travel through large red nebulae"];
+        initWithFrame: NSMakeRect(10, 4, 200, 68)]);
+      gpuStatusLabel = label;
+      [label setStringValue: gpuStatus];
       [label setFont: [NSFont systemFontOfSize: 10]];
       [label setEditable: NO];
       [label setSelectable: NO];
@@ -204,6 +217,79 @@ float randBetween(float lower, float upper)
       [inspectorView addSubview: label];
     }
   return inspectorView;
+}
+
+- (void)updateGPUStatus:(NSString *)status
+{
+  ASSIGNCOPY(gpuStatus, status);
+  [gpuStatusLabel setStringValue: gpuStatus];
+}
+
+- (void)stopGPU
+{
+  [glRenderer invalidateRenderer];
+  [glRenderer removeFromSuperview];
+  DESTROY(glRenderer);
+  gpuDrawing = NO;
+  backgroundChanged = YES;
+}
+
+- (void)setUsesGPU:(id)sender
+{
+  gpuEnabled = [sender state] == NSOnState;
+  [[NSUserDefaults standardUserDefaults] setBool: gpuEnabled forKey: @"Space2UseGPU"];
+  [self stopGPU];
+  gpuAttempted = NO;
+  [self updateGPUStatus: gpuEnabled ? @"GPU: checked when the animation starts."
+                                    : @"CPU renderer (GPU disabled)."];
+  [self setNeedsDisplay: YES];
+}
+
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow
+{
+  if (newWindow != [self window])
+    {
+      [self stopGPU];
+      gpuAttempted = NO;
+    }
+  [super viewWillMoveToWindow: newWindow];
+}
+
+- (BOOL)renderAnimationFrame
+{
+  if (!gpuEnabled || [self window] == nil) return NO;
+  @try
+    {
+      if (glRenderer == nil && !gpuAttempted)
+        {
+          gpuAttempted = YES;
+          glRenderer = [[Space2GLView alloc] initWithFrame: [self bounds] scene: self];
+          if (glRenderer != nil) [self addSubview: glRenderer];
+          if (![glRenderer prepareRenderer])
+            {
+              NSString *name = [glRenderer rendererName];
+              [self updateGPUStatus: name == nil ? @"CPU fallback: OpenGL unavailable."
+                : [NSString stringWithFormat: @"CPU fallback: %@ is not hardware accelerated.", name]];
+              [self stopGPU];
+              return NO;
+            }
+          [self updateGPUStatus: [NSString stringWithFormat: @"OpenGL: %@", [glRenderer rendererName]]];
+        }
+      if (glRenderer == nil) return NO;
+      DESTROY(cpuCloudLayer);
+      gpuDrawing = YES;
+      [self oneStep];
+      gpuDrawing = NO;
+      [self drawOpenGLScene];
+      return YES;
+    }
+  @catch (NSException *exception)
+    {
+      [self stopGPU];
+      [self updateGPUStatus: @"CPU fallback: OpenGL initialization or rendering failed."];
+      NSLog(@"Space2View OpenGL fallback: %@", [exception reason]);
+      return NO;
+    }
 }
 
 - (void)setStarColor:(id)sender
@@ -229,6 +315,7 @@ float randBetween(float lower, float upper)
   int i;
 
   cosmosMode = [sender state] == NSOnState;
+  DESTROY(cpuCloudLayer);
   [[NSUserDefaults standardUserDefaults] setBool: cosmosMode forKey: CosmosKey];
   /* Rebuild only when switching styles; each style reuses textures in flight. */
   for (i = 0; i < MAXNEBULAE; i++) DESTROY(nebulae[i].image);
@@ -364,6 +451,47 @@ float randBetween(float lower, float upper)
 
 - (void)drawNebulae
 {
+  NSRect bounds = [self bounds];
+  NSSize size;
+  CGFloat scale;
+  NSAffineTransform *transform;
+
+  if (!cosmosMode)
+    {
+      [self drawNebulaObjects];
+      return;
+    }
+  if (bounds.size.width <= 0 || bounds.size.height <= 0) return;
+  /* Software-only and remote displays cannot offload large clouds to a GPU.
+     Bound their compositing work independently of desktop resolution. Stars
+     are still drawn at native resolution after this diffuse layer. */
+  scale = MIN(1.0, 640.0 / MAX(bounds.size.width, bounds.size.height));
+  size = NSMakeSize(ceil(bounds.size.width * scale), ceil(bounds.size.height * scale));
+  if (cpuCloudLayer == nil || !NSEqualSizes([cpuCloudLayer size], size))
+    {
+      DESTROY(cpuCloudLayer);
+      cpuCloudLayer = [[NSImage alloc] initWithSize: size];
+    }
+  [cpuCloudLayer lockFocus];
+  [[NSColor blackColor] set];
+  NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+  [NSGraphicsContext saveGraphicsState];
+  transform = [NSAffineTransform transform];
+  [transform scaleXBy: size.width / bounds.size.width yBy: size.height / bounds.size.height];
+  [transform translateXBy: -bounds.origin.x yBy: -bounds.origin.y];
+  [transform concat];
+  [self drawNebulaObjects];
+  [NSGraphicsContext restoreGraphicsState];
+  [cpuCloudLayer unlockFocus];
+  [NSGraphicsContext saveGraphicsState];
+  [[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationLow];
+  [cpuCloudLayer drawInRect: bounds fromRect: NSMakeRect(0, 0, size.width, size.height)
+                 operation: NSCompositeCopy fraction: 1.0];
+  [NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)drawNebulaObjects
+{
   int i, j, order[MAXNEBULAE];
 
   /* Composite farther clouds first. Drawing never advances simulation state. */
@@ -399,6 +527,11 @@ float randBetween(float lower, float upper)
 
 - (void)setDrawingColorForHue:(float)hue
 {
+  [[self colorForHue: hue] set];
+}
+
+- (NSColor *)colorForHue:(float)hue
+{
   int selectedColor = starColor;
 
   /* Illustrative display weights, not a measured apparent-magnitude sample:
@@ -417,28 +550,22 @@ float randBetween(float lower, float upper)
   switch (selectedColor)
     {
       case 2:
-        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.62 : 0.3) green: (cosmosMode ? 0.73 : 0.55) blue: (cosmosMode ? 0.94 : 1.0)
-                                  alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedRed: (cosmosMode ? 0.62 : 0.3) green: (cosmosMode ? 0.73 : 0.55) blue: (cosmosMode ? 0.94 : 1.0)
+                                  alpha: 1.0];
       case 3:
-        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.92 : 1.0) green: (cosmosMode ? 0.65 : 0.3) blue: (cosmosMode ? 0.58 : 0.3)
-                                  alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedRed: (cosmosMode ? 0.92 : 1.0) green: (cosmosMode ? 0.65 : 0.3) blue: (cosmosMode ? 0.58 : 0.3)
+                                  alpha: 1.0];
       case 4:
-        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.77 : 0.72) green: 0.83 blue: (cosmosMode ? 0.94 : 1.0)
-                                  alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedRed: (cosmosMode ? 0.77 : 0.72) green: 0.83 blue: (cosmosMode ? 0.94 : 1.0)
+                                  alpha: 1.0];
       case 5:
-        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.88 : 0.9) blue: (cosmosMode ? 0.69 : 0.55)
-                                  alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.88 : 0.9) blue: (cosmosMode ? 0.69 : 0.55)
+                                  alpha: 1.0];
       case 6:
-        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.75 : 0.6) blue: (cosmosMode ? 0.56 : 0.3)
-                                  alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.75 : 0.6) blue: (cosmosMode ? 0.56 : 0.3)
+                                  alpha: 1.0];
       default:
-        [[NSColor colorWithCalibratedWhite: (cosmosMode ? 0.86 : 1.0) alpha: 1.0] set];
-        break;
+        return [NSColor colorWithCalibratedWhite: (cosmosMode ? 0.86 : 1.0) alpha: 1.0];
     }
 }
 
@@ -465,10 +592,14 @@ float randBetween(float lower, float upper)
     {
       /* Clear previous star positions and both previous/current cloud bounds.
          All current clouds are fully cleared before alpha compositing once. */
-      for (i = 0; i < nstars; i++) damage[damageCount++] = stars[i].draw;
-      for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
+      if (!gpuDrawing && !cosmosMode)
+        {
+          for (i = 0; i < nstars; i++) damage[damageCount++] = stars[i].draw;
+          for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
+        }
       [self advanceNebulae];
-      for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
+      if (!gpuDrawing && !cosmosMode)
+        for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
     }
   if (cosmosMode)
     {
@@ -523,6 +654,12 @@ float randBetween(float lower, float upper)
 	}
     }
   
+  if (gpuDrawing)
+    {
+      colorsChanged = NO;
+      backgroundChanged = NO;
+      return self;
+    }
   if (backgroundChanged)
     {
       /* Restore the entire background before drawing every current star. */
@@ -532,7 +669,7 @@ float randBetween(float lower, float upper)
   else if (showsNebula || cosmosMode)
     {
       [[NSColor blackColor] set];
-      NSRectFillList(damage, damageCount);
+      if (damageCount) NSRectFillList(damage, damageCount);
       [self drawNebulae];
       [self drawStars];
     }
@@ -553,6 +690,10 @@ float randBetween(float lower, float upper)
 {
   self = [super initWithFrame:frameRect];
   if (self == nil) return nil;
+  gpuEnabled = [[NSUserDefaults standardUserDefaults] objectForKey: @"Space2UseGPU"] == nil
+    || [[NSUserDefaults standardUserDefaults] boolForKey: @"Space2UseGPU"];
+  [self updateGPUStatus: gpuEnabled ? @"GPU: checked when the animation starts."
+                                    : @"CPU renderer (GPU disabled)."];
   cosmosMode = [[NSUserDefaults standardUserDefaults] boolForKey: CosmosKey];
   showsNebula = [[NSUserDefaults standardUserDefaults] boolForKey: NebulaKey];
   rotatesSpace = [[NSUserDefaults standardUserDefaults] boolForKey: RotationKey];
@@ -598,6 +739,11 @@ float randBetween(float lower, float upper)
 
 - drawRect:(NSRect)rects
 {
+  if (glRenderer != nil)
+    {
+      [self drawOpenGLScene];
+      return self;
+    }
   [NSGraphicsContext saveGraphicsState];
   NSRectClip(rects);
   [[NSColor blackColor] set];
@@ -613,6 +759,7 @@ float randBetween(float lower, float upper)
   // if (bounds.size.width == width && bounds.size.height == height) return self;
   
   [super setFrame: rect];
+  DESTROY(cpuCloudLayer);
   [self resetNebulae];
   backgroundChanged = YES;
   [self setRadius];

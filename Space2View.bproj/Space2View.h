@@ -27,6 +27,8 @@ typedef struct NEBULA {
   NSImage *image;
 } NEBULA;
 
+@class Space2GLView;
+
 @interface Space2View:NSView
 {
 	STAR stars[NSTARS];
@@ -40,11 +42,18 @@ typedef struct NEBULA {
 	BOOL colorsChanged;
 	BOOL showsNebula;
 	BOOL cosmosMode;
+        NSImage *cpuCloudLayer;
 	BOOL rotatesSpace;
 	BOOL backgroundChanged;
 	NEBULA nebulae[MAXNEBULAE];
 	int nnebulae;
 	NSView *inspectorView;
+        Space2GLView *glRenderer;
+        BOOL gpuEnabled;
+        BOOL gpuAttempted;
+        BOOL gpuDrawing;
+        NSString *gpuStatus;
+        NSTextField *gpuStatusLabel;
 }
 
 - convertToXY:(STAR *)p;
@@ -67,6 +76,12 @@ typedef struct NEBULA {
 - (NSRect)nebulaRectAt:(int)index;
 - (void)advanceNebulae;
 - (void)drawNebulae;
+- (void)drawNebulaObjects;
 - (void)setDrawingColorForHue:(float)hue;
+- (NSColor *)colorForHue:(float)hue;
+- (BOOL)renderAnimationFrame;
+- (void)setUsesGPU:(id)sender;
+- (void)stopGPU;
+- (void)updateGPUStatus:(NSString *)status;
 
 @end

@@ -5,6 +5,8 @@
 }
 // animation methods...
 - (void) oneStep;
+/* Optional: YES means the module presented directly, without AppKit focus. */
+- (BOOL) renderAnimationFrame;
 - (NSTimeInterval) animationDelayTime;
 - (void) didLockFocus;
 

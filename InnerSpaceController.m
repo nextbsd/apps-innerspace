@@ -330,15 +330,20 @@
       // once.   This means that it will not waste CPU cycles spinning and
       // doing nothing...
       NS_DURING
-	// do one frame..
-	[currentModule lockFocus];
-        if([currentModule respondsToSelector: @selector(didLockFocus)])
-	  {
-	    [currentModule didLockFocus];
-	  }
-	[currentModule oneStep];
-	[saverWindow flushWindow];
-	[currentModule unlockFocus];
+        if ([currentModule respondsToSelector: @selector(renderAnimationFrame)]
+            && [currentModule renderAnimationFrame])
+          {
+            /* Direct renderers present their own drawable. */
+          }
+        else
+          {
+            [currentModule lockFocus];
+            if ([currentModule respondsToSelector: @selector(didLockFocus)])
+              [currentModule didLockFocus];
+            [currentModule oneStep];
+            [saverWindow flushWindow];
+            [currentModule unlockFocus];
+          }
       NS_HANDLER
 	NSLog(@"EXCEPTION: %@",localException);
       NS_ENDHANDLER      
@@ -368,15 +373,20 @@
   else
     {
       NS_DURING
-	// do one frame..
-	[currentModule lockFocus];
-        if([currentModule respondsToSelector: @selector(didLockFocus)])
-	  {
-	    [currentModule didLockFocus];
-	  }
-	[currentModule oneStep];
-	[saverWindow flushWindow];
-	[currentModule unlockFocus];
+        if ([currentModule respondsToSelector: @selector(renderAnimationFrame)]
+            && [currentModule renderAnimationFrame])
+          {
+            /* Direct renderers present their own drawable. */
+          }
+        else
+          {
+            [currentModule lockFocus];
+            if ([currentModule respondsToSelector: @selector(didLockFocus)])
+              [currentModule didLockFocus];
+            [currentModule oneStep];
+            [saverWindow flushWindow];
+            [currentModule unlockFocus];
+          }
       NS_HANDLER
 	NSLog(@"EXCEPTION while in running animation: %@",localException);
       NS_ENDHANDLER
@@ -393,7 +403,27 @@
 	RETAIN(inspectorView);
 	// NSLog(@"inspectorView %@",inspectorView);
 	[(NSBox *)controlsView setBorderType: NSGrooveBorder];
-	[(NSBox *)controlsView setContentView: inspectorView];
+        /* NSBox resizes its content view, which clipped taller inspectors.
+           Keep the document's natural size inside a scrolling viewport. */
+        {
+          NSScrollView *scroll = AUTORELEASE([[NSScrollView alloc]
+            initWithFrame: [[(NSBox *)controlsView contentView] frame]]);
+          NSSize naturalSize = [inspectorView frame].size;
+          NSSize visibleSize;
+
+          [scroll setBorderType: NSNoBorder];
+          [scroll setHasVerticalScroller: YES];
+          [scroll setHasHorizontalScroller: YES];
+          [scroll setAutohidesScrollers: YES];
+          [scroll setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
+          [scroll setDocumentView: inspectorView];
+          [(NSBox *)controlsView setContentView: scroll];
+          visibleSize = [[scroll contentView] bounds].size;
+          [inspectorView setFrameSize: naturalSize];
+          [[scroll contentView] scrollToPoint: NSMakePoint(0,
+            MAX(0, naturalSize.height - visibleSize.height))];
+          [scroll reflectScrolledClipView: [scroll contentView]];
+        }
 	RELEASE(inspectorView);
 	if([moduleView respondsToSelector: @selector(inspectorInstalled)])
 	  {

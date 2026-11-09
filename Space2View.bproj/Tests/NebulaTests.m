@@ -190,6 +190,19 @@ int main(int argc, char **argv)
           @"Cloud travel stays slow across two frames");
     Check(stars[index].delta < 2.0, @"No runaway star acceleration");
   }
+  [view setFrame: NSMakeRect(0, 0, 1920, 1080)];
+  RELEASE(canvas);
+  canvas = [[NSImage alloc] initWithSize: NSMakeSize(1920, 1080)];
+  [canvas lockFocus];
+  [view oneStep];
+  [canvas unlockFocus];
+  Check(NSEqualSizes([[view valueForKey: @"cpuCloudLayer"] size], NSMakeSize(640, 360)),
+        @"Software cloud work is bounded at desktop resolutions");
+  animated = Snapshot(canvas);
+  [canvas lockFocus];
+  [view drawRect: [view bounds]];
+  [canvas unlockFocus];
+  Check(SamePixels(animated, Snapshot(canvas)), @"Scaled CPU clouds redraw consistently");
   [view setFrame: NSMakeRect(0, 0, 360, 640)];
   RELEASE(canvas);
   canvas = [[NSImage alloc] initWithSize: NSMakeSize(360, 640)];

@@ -35,7 +35,12 @@ BUNDLE_NAME = Space2View
 BUNDLE_EXTENSION = .InnerSpace
 
 # The Objective-C source files to be compiled
-Space2View_OBJC_FILES = Space2View.m
+Space2View_OBJC_FILES = Space2View.m Space2GLView.m
+ifeq ($(shell uname -s),Darwin)
+Space2View_BUNDLE_LIBS += -framework OpenGL
+else
+Space2View_BUNDLE_LIBS += -lGL
+endif
  
 Space2View_PRINCIPAL_CLASS = Space2View
 

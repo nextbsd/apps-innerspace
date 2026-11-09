@@ -180,6 +180,15 @@ Native settings panels replace the remaining Gorm inspectors:
   muted stars, gentle optional rotation, and large diffuse red nebulae with
   dark dust lanes. The red clouds appear independently of the smaller-nebula
   switch. Turning COSMOS off restores the faster, brighter starfield.
+  **Use GPU rendering** defaults on. A dedicated OpenGL view renders cached
+  cloud textures and batched stars directly; the inspector shows the driver or
+  a CPU-fallback reason. Unsupported and recognized software-only drivers
+  retain the existing CPU renderer. The GNUstep build requires OpenGL headers
+  and libGL (the OpenGL framework on Darwin). COSMOS CPU fallback uses a
+  bounded cloud-compositing surface while keeping stars full resolution.
+  A software-only VNC display still uses CPU rendering.
+  Oversized module inspectors scroll inside the Controls box so all options
+  and renderer status remain accessible.
 - **BouncyClock:** digital/analog style, numbers, clock size, bubble bounce,
   and bounce period.
 - **NickSpace:** grid spacing, trail density and length, and palette editing

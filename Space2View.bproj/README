@@ -34,6 +34,41 @@ Cloud drawing is clipped to those bounds; full redraws remain for exposure,
 resize, and enabling/disabling nebulae. Colors
 represent enhanced astronomical imaging, not naked-eye surface brightness.
 
+GPU rendering:
+"Use GPU rendering" is enabled by default and saved independently of COSMOS.
+The inspector reports the active OpenGL renderer or the reason for CPU fallback.
+The host gives this module a direct presentation path, bypassing AppKit lockFocus
+and flushWindow when OpenGL handles a frame. Other modules retain their original
+rendering path. A dedicated NSOpenGLView owns its drawable and context.
+
+Nebula textures are generated once on the CPU, uploaded once per changed texture,
+and retained on the GPU. OpenGL performs the full-resolution scaling, rotation,
+alpha blending, and compositing. Stars are submitted as one vertex/color-array
+batch. Position updates stay on the CPU. Animation does not read pixels back
+from the GPU or copy the rendered scene through an AppKit bitmap.
+
+GPU textures/context are cleaned up when disabling GPU rendering or changing
+windows and recreated for the new drawable. Resizing updates the viewport.
+Missing contexts, unsupported backends, and recognized software renderers
+(llvmpipe, softpipe, SwiftShader, and software-labelled drivers) use the existing
+CPU renderer automatically. The inspector checkbox can also force CPU rendering.
+For large COSMOS scenes, CPU fallback composites diffuse gas on a reusable surface
+capped at 640 points on its long axis and scales it once to the view. Stars stay
+at native resolution. Hardware rendering is unchanged. This reduces software
+blending work, but copying a large desktop and remote-display encoding still cost
+CPU time. A VNC session reporting llvmpipe is not hardware accelerated simply
+because "Use GPU rendering" is checked.
+The first failed initialization is remembered until the setting or window changes
+so unsupported systems do not repeatedly pay initialization costs.
+
+The GNUstep module now links libGL and requires OpenGL development headers when
+building. The Darwin GNUstep build links the OpenGL framework. It uses the desktop
+compatibility-profile API supported by NSOpenGLView; a future native Metal port
+would be a separate backend. This change was tested on GNUstep/X11 with Xvfb's
+llvmpipe software GL explicitly enabled for tests. Hardware acceleration and
+macOS runtime behavior have not been verified in this environment. Actual CPU
+savings depend on the active driver; software GL is not treated as a GPU upgrade.
+
 Prevalence model and limits:
 The WISE Galactic H II catalog v2 contains approximately 8,000 H II regions and
 candidates. Dividing by 41,253 square degrees gives a reference all-sky density
@@ -64,3 +99,27 @@ GNUstep regression checks (from the project directory):
 The test checks the default, toggle, restoration, 600 animation frames, resizing,
 removal, perspective motion, catalog density, expanded palette, texture reuse,
 rotation controls, and COSMOS default/persistence/red-cloud behavior. Render samples go to /tmp/innerspace-nebula*.png.
+
+OpenGL regression tests (Xvfb must have GLX/Mesa support):
+
+  clang $(gnustep-config --objc-flags) Space2View.bproj/Tests/OpenGLTests.m UtilFunctions.c -o /tmp/innerspace-opengl-tests $(gnustep-config --gui-libs) -lGL
+  xvfb-run -a /tmp/innerspace-opengl-tests "$PWD/Space2View.bproj/Space2View.InnerSpace"
+
+These tests explicitly enable the diagnostic Space2AllowSoftwareOpenGL preference
+inside their own process, verify rendered red-cloud/star pixels, steady-frame
+texture reuse, mode changes, resizing, moving between windows, GPU preference
+persistence, and automatic software-driver fallback. Pixel readback is test-only.
+The rendered sample is /tmp/innerspace-opengl.png.
+
+Host direct-presentation routing regression:
+
+  clang $(gnustep-config --objc-flags) Tests/DirectRenderingTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-direct-tests $(gnustep-config --gui-libs)
+  /tmp/innerspace-direct-tests
+
+Inspector installation regression (real host Controls box at 380x210):
+
+  clang $(gnustep-config --objc-flags) Tests/InspectorLayoutTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-inspector-tests $(gnustep-config --gui-libs)
+  xvfb-run -a /tmp/innerspace-inspector-tests "$PWD/Space2View.bproj/Space2View.InnerSpace"
+
+Checks preserve the inspector document size, keep every control inside it, start
+at the top, and allow scrolling to the GPU status at the bottom.

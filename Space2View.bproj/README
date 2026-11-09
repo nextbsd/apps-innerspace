@@ -1,2 +1,47 @@
 Ported from a Backspace module of the same name.   I believe this code 
 to be in the public domain.
+
+Random star colors use an illustrative display mix: red 70%, orange 15%,
+yellow 8%, white 5%, blue-white 1.8%, and blue 0.2%. This reduces the red
+share from the earlier population-based palette; it is not a measured sample
+of stars visible from Earth. All six colors can also be selected individually.
+
+Enable "Show moving nebulae" in the inspector to fly past small, individually
+seeded gas clouds. This is off by default and the choice persists. There is no
+background photograph or network request. Cached 128-pixel RGBA textures use
+warped, multiscale noise, irregular gas density, dust absorption lanes, and muted
+warm emission with localized cool regions. Each cloud has its own position,
+depth, radius, and orientation. Perspective uses 1/z for both position and size;
+clouds share the stars' vanishing point and roll, expanding as they approach.
+They fade in at the far plane, fade out near the camera, and are replaced when
+they leave the view. Full-frame composition prevents erasure trails. Colors
+represent enhanced astronomical imaging, not naked-eye surface brightness.
+
+Prevalence model and limits:
+The WISE Galactic H II catalog v2 contains approximately 8,000 H II regions and
+candidates. Dividing by 41,253 square degrees gives a reference all-sky density
+of 0.194 objects per square degree. The illustrative field has a 6-degree short
+axis and an aspect-dependent long axis capped at 12 degrees. A Poisson draw
+sets the population (mean 12.4 at 16:9), capped at 32 for performance. Slots are
+recycled to keep that population steady during flight. Initial depths are
+sampled proportional to z squared, as for a uniform volume within a cone.
+
+This is a catalog-informed visualization, not a measured ratio to the 200
+animated stars. The WISE sample is infrared-selected, includes candidates,
+is concentrated toward the Galactic plane, and does not establish optical
+visibility or a uniform sky distribution. The field size, flight speed, cloud
+sizes, and enhanced colors are artistic choices. The all-sky mean deliberately
+avoids pretending to simulate a particular Galactic sightline. All clouds are
+H II-inspired; no unsupported percentages for other nebula types are assigned.
+Source: https://www.ipac.caltech.edu/doi/10.26131/IRSA146
+Paper: Anderson et al. (2014), The WISE Catalog of Galactic H II Regions,
+https://doi.org/10.1088/0067-0049/212/1/1
+
+GNUstep regression checks (from the project directory):
+
+  make -C Space2View.bproj -f GNUmakefile GNUSTEP_MAKEFILES="$(gnustep-config --variable=GNUSTEP_MAKEFILES)"
+  clang $(gnustep-config --objc-flags) Space2View.bproj/Tests/NebulaTests.m UtilFunctions.c -o /tmp/innerspace-nebula-tests $(gnustep-config --gui-libs)
+  xvfb-run -a /tmp/innerspace-nebula-tests "$PWD/Space2View.bproj/Space2View.InnerSpace"
+
+The test checks the default, toggle, restoration, 600 animation frames, resizing,
+removal, perspective motion, catalog density, and expanded palette. Render samples go to /tmp/innerspace-nebula*.png.

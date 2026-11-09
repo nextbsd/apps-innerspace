@@ -2,6 +2,7 @@
 
 #define NSTARS (200)
 #define STARSPERIT (100)
+#define MAXNEBULAE (32)
 
 typedef struct STAR {
 	float hue;
@@ -17,6 +18,13 @@ typedef struct STAR {
 	
 	} STAR;
 
+typedef struct NEBULA {
+  double x, y, z, radius, angle;
+  unsigned int seed;
+  int age;
+  NSImage *image;
+} NEBULA;
+
 @interface Space2View:NSView
 {
 	STAR stars[NSTARS];
@@ -28,6 +36,10 @@ typedef struct STAR {
 	float hues[NSTARS];
 	int starColor;
 	BOOL colorsChanged;
+	BOOL showsNebula;
+	BOOL backgroundChanged;
+	NEBULA nebulae[MAXNEBULAE];
+	int nnebulae;
 	NSView *inspectorView;
 }
 
@@ -40,6 +52,13 @@ typedef struct STAR {
 - setRadius;
 - (NSView *)inspector:(id)sender;
 - (void)setStarColor:(id)sender;
+- (void)setShowsNebula:(id)sender;
+- (void)resetNebulae;
+- (double)nebulaExpectedCount;
+- (void)replaceNebulaAt:(int)index initial:(BOOL)initial;
+- (NSRect)nebulaRectAt:(int)index;
+- (void)advanceNebulae;
+- (void)drawNebulae;
 - (void)setDrawingColorForHue:(float)hue;
 
 @end

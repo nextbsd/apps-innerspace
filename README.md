@@ -168,8 +168,12 @@ Native settings panels replace the remaining Gorm inspectors:
 
 - **Boxes:** **Random angles** rotates each new box independently. It is off
   by default, and the setting is saved across launches.
-- **Space2View:** star color: White (default), Random, Blue, or Red. Random
+- **Space2View:** star color: White (default), Random, Blue, Red, Blue-white, Yellow, or Orange. Random
   assigns each star its own color; changes apply immediately and persist.
+  **Show moving nebulae** adds small procedural gas clouds that move and grow
+  in perspective with the stars. Counts use a documented WISE catalog density
+  reference; colors and visibility represent enhanced astronomical imaging.
+  It is off by default, works offline, and remembers your choice.
 - **BouncyClock:** digital/analog style, numbers, clock size, bubble bounce,
   and bounce period.
 - **NickSpace:** grid spacing, trail density and length, and palette editing

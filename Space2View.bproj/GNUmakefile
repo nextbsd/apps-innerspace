@@ -40,7 +40,7 @@ Space2View_OBJC_FILES = Space2View.m
 Space2View_PRINCIPAL_CLASS = Space2View
 
 # The Resource files to be copied into the bundle's resources directory
-Space2View_RESOURCE_FILES = 
+Space2View_RESOURCE_FILES =
 
 -include GNUmakefile.preamble
 

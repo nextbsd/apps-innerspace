@@ -129,3 +129,14 @@ Inspector installation regression (real host Controls box at 380x210):
 
 Checks preserve the inspector document size, keep every control inside it, start
 at the top, and allow scrolling to the GPU status at the bottom.
+
+Frame presentation regression (requires a display):
+
+  clang $(gnustep-config --objc-flags) Tests/FrameFlushTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-flush-tests $(gnustep-config --gui-libs)
+  xvfb-run -a /tmp/innerspace-flush-tests
+
+The host unlocks drawing focus before flushing a CPU-rendered frame. GNUstep
+marks the drawn region dirty during unlock; flushing first would leave a second
+presentation pending for the application update loop. This test exercises real
+windows for both animated and static modules and checks that each frame presents
+once, with no duplicate flush pending. GPU presentation is unchanged.

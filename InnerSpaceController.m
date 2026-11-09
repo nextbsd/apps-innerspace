@@ -350,8 +350,10 @@
             if ([currentModule respondsToSelector: @selector(didLockFocus)])
               [currentModule didLockFocus];
             [currentModule oneStep];
-            [saverWindow flushWindow];
+            /* Unlock first: GNUstep marks the drawn area for flushing here.
+               Flushing before unlocking queues a second presentation. */
             [currentModule unlockFocus];
+            [saverWindow flushWindow];
           }
       NS_HANDLER
 	NSLog(@"EXCEPTION: %@",localException);
@@ -393,8 +395,10 @@
             if ([currentModule respondsToSelector: @selector(didLockFocus)])
               [currentModule didLockFocus];
             [currentModule oneStep];
-            [saverWindow flushWindow];
+            /* Unlock first: GNUstep marks the drawn area for flushing here.
+               Flushing before unlocking queues a second presentation. */
             [currentModule unlockFocus];
+            [saverWindow flushWindow];
           }
         /* GPU activation/fallback can change the preferred cadence. Recreate
            the timer only when that cadence actually changes. */

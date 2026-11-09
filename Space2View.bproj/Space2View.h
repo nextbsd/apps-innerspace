@@ -1,9 +1,10 @@
-#import <AppKit/NSView.h>
+#import <AppKit/AppKit.h>
 
 #define NSTARS (200)
 #define STARSPERIT (100)
 
 typedef struct STAR {
+	float hue;
 	float theta;	// angle
 	float distance;
 	float delta;	// change in distance
@@ -24,6 +25,10 @@ typedef struct STAR {
 
 	NSRect b[NSTARS];
 	NSRect w[NSTARS];
+	float hues[NSTARS];
+	int starColor;
+	BOOL colorsChanged;
+	NSView *inspectorView;
 }
 
 - convertToXY:(STAR *)p;
@@ -33,4 +38,8 @@ typedef struct STAR {
 - addStar;
 - replaceStarAt:(int)index;
 - setRadius;
+- (NSView *)inspector:(id)sender;
+- (void)setStarColor:(id)sender;
+- (void)setDrawingColorForHue:(float)hue;
+
 @end

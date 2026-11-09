@@ -13,6 +13,8 @@
 
 #define PI (3.141592653589)
 
+static NSString *StarColorKey = @"Space2StarColor";
+
 NSSize sizeArray[] = {{1,1},{2,1},{2,2},{3,2},{3,3},{4,3},{4,4}};
 
 @implementation Space2View
@@ -37,6 +39,71 @@ float randBetween(float lower, float upper)
 }
 #endif
 
+
+- (void)dealloc
+{
+  RELEASE(inspectorView);
+  DEALLOC;
+}
+
+- (NSView *)inspector:(id)sender
+{
+  if (inspectorView == nil)
+    {
+      NSTextField *label;
+      NSPopUpButton *popup;
+
+      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 220, 70)];
+      label = AUTORELEASE([[NSTextField alloc]
+        initWithFrame: NSMakeRect(10, 42, 200, 20)]);
+      [label setStringValue: @"Star color"];
+      [label setEditable: NO];
+      [label setSelectable: NO];
+      [label setBordered: NO];
+      [label setDrawsBackground: NO];
+      [inspectorView addSubview: label];
+      popup = AUTORELEASE([[NSPopUpButton alloc]
+        initWithFrame: NSMakeRect(10, 10, 200, 26) pullsDown: NO]);
+      [popup addItemsWithTitles: [NSArray arrayWithObjects:
+        @"White", @"Random", @"Blue", @"Red", nil]];
+      [popup selectItemAtIndex: starColor];
+      [popup setTarget: self];
+      [popup setAction: @selector(setStarColor:)];
+      [inspectorView addSubview: popup];
+    }
+  return inspectorView;
+}
+
+- (void)setStarColor:(id)sender
+{
+  starColor = [sender indexOfSelectedItem];
+  [[NSUserDefaults standardUserDefaults] setObject: [sender titleOfSelectedItem]
+                                         forKey: StarColorKey];
+  colorsChanged = YES;
+  [self setNeedsDisplay: YES];
+}
+
+- (void)setDrawingColorForHue:(float)hue
+{
+  switch (starColor)
+    {
+      case 1:
+        [[NSColor colorWithCalibratedHue: hue saturation: 0.65
+                             brightness: 1.0 alpha: 1.0] set];
+        break;
+      case 2:
+        [[NSColor colorWithCalibratedRed: 0.3 green: 0.55 blue: 1.0
+                                  alpha: 1.0] set];
+        break;
+      case 3:
+        [[NSColor colorWithCalibratedRed: 1.0 green: 0.3 blue: 0.3
+                                  alpha: 1.0] set];
+        break;
+      default:
+        [[NSColor whiteColor] set];
+        break;
+    }
+}
 
 //takes theta and distance and stuffs it into x &y for *p
 - convertToXY:(STAR *)p
@@ -67,13 +134,14 @@ float randBetween(float lower, float upper)
       [self convertToXY:p];
       
       // only draw the star if it moved > 1 pixel
-      if (p->draw.origin.x != p->erase.origin.x || 
+      if (colorsChanged || p->draw.origin.x != p->erase.origin.x ||
 	  p->draw.origin.y != p->erase.origin.y)
 	{
 	  // add star to the erasure array
 	  b[starsInArray] = p->erase;
 	  
-	  if (p->distance > p->changepoint[p->changemode])
+	  if (p->changemode < 5 &&
+            p->distance > p->changepoint[p->changemode])
 	    {
 	      (p->changemode)++;
 	      p->draw.size = sizeArray[p->changemode];
@@ -89,6 +157,7 @@ float randBetween(float lower, float upper)
 	      [self replaceStarAt:i];
 	    }
 	  
+	  hues[starsInArray] = p->hue;
 	  w[starsInArray++] = p->draw;
 	  
 	  p->erase = p->draw;
@@ -112,19 +181,40 @@ float randBetween(float lower, float upper)
 	  PSsetgray(0.0);
 	  NSRectFillList(&b[count],i);
 	  
-	  PSsetgray(1.0);
-	  NSRectFillList(&w[count],i);
+	  if (starColor == 1)
+            {
+              int j;
+              for (j = count; j < count + i; j++)
+                {
+                  [self setDrawingColorForHue: hues[j]];
+                  NSRectFill(w[j]);
+                }
+            }
+          else
+            {
+              [self setDrawingColorForHue: 0];
+              NSRectFillList(&w[count], i);
+            }
 	  
 	  count += STARSPERIT;
 	}
     }
   
+  colorsChanged = NO;
   return self;
 }
 
 - initWithFrame:(NSRect)frameRect
 {
-  [super initWithFrame:frameRect];
+  self = [super initWithFrame:frameRect];
+  if (self == nil) return nil;
+  {
+    NSString *color = [[NSUserDefaults standardUserDefaults]
+      stringForKey: StarColorKey];
+    if ([color isEqualToString: @"Random"]) starColor = 1;
+    else if ([color isEqualToString: @"Blue"]) starColor = 2;
+    else if ([color isEqualToString: @"Red"]) starColor = 3;
+  }
   // [self allocateGState];		// For faster lock/unlockFocus
   // [self setClipping:NO];		// even faster...
   [self setRadius];
@@ -134,15 +224,15 @@ float randBetween(float lower, float upper)
 
 - drawRect:(NSRect)rects 
 {
-  // this drawself doesn't really draw the view at all.
-  // in fact it just promotes the window to screen depth...
-  
-  NSRect t = NSMakeRect(0,0,1,1);
-  
-  PSsetrgbcolor(1,0,0);
-  NSRectFill(t);	//yucky trick for window depth promotion!
-  PSsetgray(0.0); 
-  NSRectFill(t);
+  int i;
+
+  [[NSColor blackColor] set];
+  NSRectFill(rects);
+  for (i = 0; i < nstars; i++)
+    {
+      [self setDrawingColorForHue: stars[i].hue];
+      NSRectFill(stars[i].draw);
+    }
   return self;
 }
 
@@ -187,6 +277,7 @@ float randBetween(float lower, float upper)
       }
   } while (!inBounds);
   
+  p->hue = randBetween(0, 1);
   p->draw.size = sizeArray[0];
   
   p->delta = (0.3);

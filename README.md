@@ -166,6 +166,10 @@ render sample to `/tmp/innerspace-weather-test.png` and does not use the network
 
 Native settings panels replace the remaining Gorm inspectors:
 
+- **Boxes:** **Random angles** rotates each new box independently. It is off
+  by default, and the setting is saved across launches.
+- **Space2View:** star color: White (default), Random, Blue, or Red. Random
+  assigns each star its own color; changes apply immediately and persist.
 - **BouncyClock:** digital/analog style, numbers, clock size, bubble bounce,
   and bounce period.
 - **NickSpace:** grid spacing, trail density and length, and palette editing

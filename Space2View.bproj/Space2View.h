@@ -9,9 +9,10 @@ typedef struct STAR {
 	float theta;	// angle
 	float distance;
 	float delta;	// change in distance
-	float ddelta;	// change in delta, a constant multiplier
+	float ddelta;
+	float depth;	// camera-space depth for gentle perspective travel
 	int changemode;
-	float changepoint[6];
+
 	
 	NSRect draw;
 	NSRect erase;
@@ -22,6 +23,7 @@ typedef struct NEBULA {
   double x, y, z, radius, angle;
   unsigned int seed;
   int age;
+  BOOL redCloud;
   NSImage *image;
 } NEBULA;
 
@@ -37,6 +39,8 @@ typedef struct NEBULA {
 	int starColor;
 	BOOL colorsChanged;
 	BOOL showsNebula;
+	BOOL cosmosMode;
+	BOOL rotatesSpace;
 	BOOL backgroundChanged;
 	NEBULA nebulae[MAXNEBULAE];
 	int nnebulae;
@@ -53,6 +57,10 @@ typedef struct NEBULA {
 - (NSView *)inspector:(id)sender;
 - (void)setStarColor:(id)sender;
 - (void)setShowsNebula:(id)sender;
+- (void)setCosmosMode:(id)sender;
+- (void)setRotatesSpace:(id)sender;
+- (NSRect)nebulaDamageRectAt:(int)index;
+- (void)drawStars;
 - (void)resetNebulae;
 - (double)nebulaExpectedCount;
 - (void)replaceNebulaAt:(int)index initial:(BOOL)initial;

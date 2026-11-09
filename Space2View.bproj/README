@@ -6,15 +6,32 @@ yellow 8%, white 5%, blue-white 1.8%, and blue 0.2%. This reduces the red
 share from the earlier population-based palette; it is not a measured sample
 of stars visible from Earth. All six colors can also be selected individually.
 
-Enable "Show moving nebulae" in the inspector to fly past small, individually
-seeded gas clouds. This is off by default and the choice persists. There is no
-background photograph or network request. Cached 128-pixel RGBA textures use
+"COSMOS mode" is optional and OFF by default. Enabling it selects slow,
+depth-based travel, small muted stars, and two large diffuse red nebulae with
+dark dust lanes. These foreground clouds are a cinematic addition, not a
+catalog-derived population or a reproduction of footage. They appear even
+when "Show moving nebulae" is off. Turning COSMOS off restores faster,
+accelerating stars and the brighter palette. Mode changes apply immediately
+and persist, without changing the other controls' saved choices.
+
+"Show moving nebulae" independently controls the smaller, catalog-inspired
+clouds and remains off by default. "Rotate space view" defaults off for new
+settings. When enabled, COSMOS uses a slow roll (about 29 minutes per revolution
+at 30 fps); ordinary mode uses the original faster roll. The speed slider
+controls both modes. All options persist. There is no
+background photograph or network request. Cached RGBA textures (128 pixels for small clouds, 256 for red clouds) use
 warped, multiscale noise, irregular gas density, dust absorption lanes, and muted
 warm emission with localized cool regions. Each cloud has its own position,
 depth, radius, and orientation. Perspective uses 1/z for both position and size;
 clouds share the stars' vanishing point and roll, expanding as they approach.
 They fade in at the far plane, fade out near the camera, and are replaced when
-they leave the view. Full-frame composition prevents erasure trails. Colors
+they leave the view. Each slot reuses its generated texture with a new position,
+size, and orientation. The bounded texture pool survives nebula toggles and resizing; changing COSMOS
+style rebuilds it
+and is released with the view. Animation clears only old star positions and
+old/new rotated cloud bounds, then composites clouds once and redraws stars.
+Cloud drawing is clipped to those bounds; full redraws remain for exposure,
+resize, and enabling/disabling nebulae. Colors
 represent enhanced astronomical imaging, not naked-eye surface brightness.
 
 Prevalence model and limits:
@@ -22,7 +39,8 @@ The WISE Galactic H II catalog v2 contains approximately 8,000 H II regions and
 candidates. Dividing by 41,253 square degrees gives a reference all-sky density
 of 0.194 objects per square degree. The illustrative field has a 6-degree short
 axis and an aspect-dependent long axis capped at 12 degrees. A Poisson draw
-sets the population (mean 12.4 at 16:9), capped at 32 for performance. Slots are
+sets the small-cloud population (mean 12.4 at 16:9), capped at 30 to reserve
+two slots for the optional cinematic red clouds. Slots are
 recycled to keep that population steady during flight. Initial depths are
 sampled proportional to z squared, as for a uniform volume within a cone.
 
@@ -44,4 +62,5 @@ GNUstep regression checks (from the project directory):
   xvfb-run -a /tmp/innerspace-nebula-tests "$PWD/Space2View.bproj/Space2View.InnerSpace"
 
 The test checks the default, toggle, restoration, 600 animation frames, resizing,
-removal, perspective motion, catalog density, and expanded palette. Render samples go to /tmp/innerspace-nebula*.png.
+removal, perspective motion, catalog density, expanded palette, texture reuse,
+rotation controls, and COSMOS default/persistence/red-cloud behavior. Render samples go to /tmp/innerspace-nebula*.png.

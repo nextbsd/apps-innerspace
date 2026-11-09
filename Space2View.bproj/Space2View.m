@@ -2,7 +2,7 @@
 //
 //  This class implements the flying starfield screen saver view.
 //
-//  Another variation on the space theme, slightly faster and different.
+//  A quiet journey through a deep starfield with optional procedural nebulae.
 
 
 #import "Space2View.h"
@@ -12,11 +12,16 @@
 #import <math.h>
 
 #define PI (3.141592653589)
+/* Shared camera motion: ~90 seconds to cross the depth range at 30 fps.
+   Optional roll takes about 29 minutes per revolution at that frame rate. */
+#define TRAVEL_STEP (0.002)
+#define SPACE_ROLL (0.00012)
 
 static NSString *StarColorKey = @"Space2StarColor";
 static NSString *NebulaKey = @"Space2ShowsNebula";
+static NSString *CosmosKey = @"Space2CosmosMode";
+static NSString *RotationKey = @"Space2RotatesSpace";
 
-NSSize sizeArray[] = {{1,1},{2,1},{2,2},{3,2},{3,3},{4,3},{4,4}};
 
 /* Seeded, smooth multiscale density fields produce unique gas and dust, without
    downloaded images or per-frame noise changes. Colors are exposure-enhanced. */
@@ -55,39 +60,47 @@ static double NebulaFBM(double x, double y, unsigned int seed)
   return value;
 }
 
-static NSImage *CreateNebulaTexture(unsigned int seed)
+static NSImage *CreateNebulaTexture(unsigned int seed, BOOL redCloud)
 {
+  int side = redCloud ? 256 : 128;
   NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
-    initWithBitmapDataPlanes: NULL pixelsWide: 128 pixelsHigh: 128
+    initWithBitmapDataPlanes: NULL pixelsWide: side pixelsHigh: side
     bitsPerSample: 8 samplesPerPixel: 4 hasAlpha: YES isPlanar: NO
-    colorSpaceName: NSDeviceRGBColorSpace bytesPerRow: 512 bitsPerPixel: 32];
-  NSImage *image = [[NSImage alloc] initWithSize: NSMakeSize(128, 128)];
+    colorSpaceName: NSDeviceRGBColorSpace bytesPerRow: side * 4 bitsPerPixel: 32];
+  NSImage *image = [[NSImage alloc] initWithSize: NSMakeSize(side, side)];
   unsigned char *bytes = [rep bitmapData];
   int x, y;
   double elongation = 0.65 + NebulaHash(2, 7, seed) * 0.45;
 
-  for (y = 0; y < 128; y++)
-    for (x = 0; x < 128; x++)
+  for (y = 0; y < side; y++)
+    for (x = 0; x < side; x++)
       {
-        double u = (x - 63.5) / 60.0, v = (y - 63.5) / 60.0;
+        double u = (x - (side - 1) * 0.5) / (side * 0.469), v = (y - (side - 1) * 0.5) / (side * 0.469);
         double warp = NebulaNoise(u * 2 + 8, v * 2 + 8, seed) - 0.5;
         double gas = NebulaFBM(u * 4 + 16 + warp, v * 4 + 16 - warp, seed);
         double r = hypot(u * elongation + warp * 0.3, v / elongation);
-        double envelope = pow(MAX(0, 1 - r * r), 2);
+        double edge = MIN(1, MAX(0, (1.0 - MAX(fabs(u), fabs(v))) / 0.30));
+        double envelope = pow(MAX(0, 1 - r * r), 1.7) * edge * edge * (3 - 2 * edge);
         double dust = NebulaFBM(u * 7 + 30, v * 4 + 30, seed + 111);
         double lane = exp(-pow((v + 0.25 * sin(u * 5 + seed) + warp * 0.4) / 0.10, 2));
         double density = MAX(0, gas - 0.24) * 2.5 * envelope;
         double light = MIN(1, density * (1 - 0.8 * lane) * (1 - 0.65 * dust));
         double core = MAX(0, gas - 0.52) * 2;
         double blue = NebulaNoise(u * 2 + 5, v * 2 + 5, seed + 771);
-        unsigned char *pixel = bytes + y * 512 + x * 4;
+        unsigned char *pixel = bytes + y * side * 4 + x * 4;
 
         /* Warm hydrogen emission with localized cool reflection/ionized gas;
            fine structure and absorption, not a uniform glowing ellipse. */
-        pixel[0] = (unsigned char)(255 * MIN(1, 0.76 + core * 0.3 - blue * 0.3));
-        pixel[1] = (unsigned char)(255 * MIN(1, 0.25 + core * 0.5 + blue * 0.16));
-        pixel[2] = (unsigned char)(255 * MIN(1, 0.35 + core * 0.25 + blue * 0.45));
-        pixel[3] = (unsigned char)(255 * MIN(0.9, light * 1.9));
+        pixel[0] = (unsigned char)(255 * MIN(1, 0.70 + core * 0.25 - blue * 0.16));
+        pixel[1] = (unsigned char)(255 * MIN(1, 0.42 + core * 0.35 + blue * 0.12));
+        pixel[2] = (unsigned char)(255 * MIN(1, 0.48 + core * 0.20 + blue * 0.25));
+        if (redCloud)
+          {
+            pixel[0] = (unsigned char)(255 * MIN(1, 0.80 + core * 0.2));
+            pixel[1] = (unsigned char)(255 * (0.10 + core * 0.22));
+            pixel[2] = (unsigned char)(255 * (0.13 + core * 0.18));
+          }
+        pixel[3] = (unsigned char)(255 * MIN(0.65, light * 1.45));
         /* This bitmap initializer uses premultiplied alpha. Transparent
            pixels must carry no RGB energy, including the texture border. */
         pixel[0] = (unsigned char)(pixel[0] * pixel[3] / 255);
@@ -139,9 +152,9 @@ float randBetween(float lower, float upper)
       NSPopUpButton *popup;
       NSButton *checkbox;
 
-      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 220, 140)];
+      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 220, 200)];
       label = AUTORELEASE([[NSTextField alloc]
-        initWithFrame: NSMakeRect(10, 112, 200, 20)]);
+        initWithFrame: NSMakeRect(10, 172, 200, 20)]);
       [label setStringValue: @"Star color"];
       [label setEditable: NO];
       [label setSelectable: NO];
@@ -149,7 +162,7 @@ float randBetween(float lower, float upper)
       [label setDrawsBackground: NO];
       [inspectorView addSubview: label];
       popup = AUTORELEASE([[NSPopUpButton alloc]
-        initWithFrame: NSMakeRect(10, 80, 200, 26) pullsDown: NO]);
+        initWithFrame: NSMakeRect(10, 140, 200, 26) pullsDown: NO]);
       [popup addItemsWithTitles: [NSArray arrayWithObjects:
         @"White", @"Random", @"Blue", @"Red", @"Blue-white", @"Yellow", @"Orange", nil]];
       [popup selectItemAtIndex: starColor];
@@ -157,16 +170,32 @@ float randBetween(float lower, float upper)
       [popup setAction: @selector(setStarColor:)];
       [inspectorView addSubview: popup];
       checkbox = AUTORELEASE([[NSButton alloc]
-        initWithFrame: NSMakeRect(10, 49, 200, 24)]);
+        initWithFrame: NSMakeRect(10, 109, 200, 24)]);
       [checkbox setButtonType: NSSwitchButton];
       [checkbox setTitle: @"Show moving nebulae"];
       [checkbox setState: showsNebula ? NSOnState : NSOffState];
       [checkbox setTarget: self];
       [checkbox setAction: @selector(setShowsNebula:)];
       [inspectorView addSubview: checkbox];
+      checkbox = AUTORELEASE([[NSButton alloc]
+        initWithFrame: NSMakeRect(10, 79, 200, 24)]);
+      [checkbox setButtonType: NSSwitchButton];
+      [checkbox setTitle: @"Rotate space view"];
+      [checkbox setState: rotatesSpace ? NSOnState : NSOffState];
+      [checkbox setTarget: self];
+      [checkbox setAction: @selector(setRotatesSpace:)];
+      [inspectorView addSubview: checkbox];
+      checkbox = AUTORELEASE([[NSButton alloc]
+        initWithFrame: NSMakeRect(10, 49, 200, 24)]);
+      [checkbox setButtonType: NSSwitchButton];
+      [checkbox setTitle: @"COSMOS mode"];
+      [checkbox setState: cosmosMode ? NSOnState : NSOffState];
+      [checkbox setTarget: self];
+      [checkbox setAction: @selector(setCosmosMode:)];
+      [inspectorView addSubview: checkbox];
       label = AUTORELEASE([[NSTextField alloc]
         initWithFrame: NSMakeRect(10, 4, 200, 40)]);
-      [label setStringValue: @"Random gas clouds at varied distances"];
+      [label setStringValue: @"COSMOS: slow travel through large red nebulae"];
       [label setFont: [NSFont systemFontOfSize: 10]];
       [label setEditable: NO];
       [label setSelectable: NO];
@@ -195,15 +224,36 @@ float randBetween(float lower, float upper)
   [self setNeedsDisplay: YES];
 }
 
+- (void)setCosmosMode:(id)sender
+{
+  int i;
+
+  cosmosMode = [sender state] == NSOnState;
+  [[NSUserDefaults standardUserDefaults] setBool: cosmosMode forKey: CosmosKey];
+  /* Rebuild only when switching styles; each style reuses textures in flight. */
+  for (i = 0; i < MAXNEBULAE; i++) DESTROY(nebulae[i].image);
+  backgroundChanged = YES;
+  nstars = 0;
+  [self resetNebulae];
+  [self setNeedsDisplay: YES];
+}
+
+- (void)setRotatesSpace:(id)sender
+{
+  rotatesSpace = [sender state] == NSOnState;
+  [[NSUserDefaults standardUserDefaults] setBool: rotatesSpace forKey: RotationKey];
+}
+
 - (void)resetNebulae
 {
   int i;
   double product = 1.0;
   double mean = [self nebulaExpectedCount];
 
-  for (i = 0; i < MAXNEBULAE; i++) DESTROY(nebulae[i].image);
+  /* Keep the bounded texture pool across recycling, toggles, and resizing. */
   nnebulae = 0;
-  if (!showsNebula || mean <= 0) return;
+  if ((!showsNebula && !cosmosMode) || mean <= 0) return;
+  if (!showsNebula) mean = 0;
   /* Poisson sky counts, capped only to bound rendering and memory costs. */
   do
     {
@@ -211,8 +261,15 @@ float randBetween(float lower, float upper)
       if (product <= exp(-mean)) break;
       nnebulae++;
     }
-  while (nnebulae < MAXNEBULAE);
-  for (i = 0; i < nnebulae; i++) [self replaceNebulaAt: i initial: YES];
+  while (nnebulae < MAXNEBULAE - 2);
+  if (cosmosMode) nnebulae += 2;
+  for (i = 0; i < nnebulae; i++)
+    {
+      BOOL red = cosmosMode && i >= nnebulae - 2;
+      if (nebulae[i].redCloud != red) DESTROY(nebulae[i].image);
+      nebulae[i].redCloud = red;
+      [self replaceNebulaAt: i initial: YES];
+    }
 }
 
 - (double)nebulaExpectedCount
@@ -234,16 +291,26 @@ float randBetween(float lower, float upper)
   NEBULA *p = &nebulae[index];
   NSSize size = [self bounds].size;
   double focal = MAX(1.0, MIN(size.width, size.height) * 0.65);
+  unsigned int seed = (unsigned int)randBetween(1, 1000000);
 
-  DESTROY(p->image);
-  p->seed = (unsigned int)randBetween(1, 1000000);
   p->z = initial ? cbrt(randBetween(1, 216)) : 6.0;
   p->x = randBetween(-0.46, 0.46) * size.width * p->z / focal;
   p->y = randBetween(-0.46, 0.46) * size.height * p->z / focal;
   p->radius = randBetween(0.12, 0.30);
+  if (p->redCloud)
+    {
+      p->z = initial ? randBetween(2.5, 4.0) : 6.0;
+      p->radius = randBetween(1.9, 2.8);
+      p->x = randBetween(-0.28, 0.28) * size.width * p->z / focal;
+      p->y = randBetween(-0.25, 0.25) * size.height * p->z / focal;
+    }
   p->angle = randBetween(0, 2 * PI);
-  p->age = initial ? 60 : 0;
-  p->image = CreateNebulaTexture(p->seed);
+  p->age = initial ? 180 : 0;
+  if (p->image == nil)
+    {
+      p->seed = seed;
+      p->image = CreateNebulaTexture(p->seed, p->redCloud);
+    }
 }
 
 - (NSRect)nebulaRectAt:(int)index
@@ -259,10 +326,25 @@ float randBetween(float lower, float upper)
                     diameter, diameter);
 }
 
+- (NSRect)nebulaDamageRectAt:(int)index
+{
+  NSRect rect = [self nebulaRectAt: index];
+  double angle = nebulae[index].angle;
+  double extent = rect.size.width * (fabs(cos(angle)) + fabs(sin(angle)));
+
+  /* Include rotated corners and a pixel fringe for filtering, then align to
+     pixel boundaries so repeated erasure leaves no partially cleared edges. */
+  rect = NSIntegralRect(NSMakeRect(NSMidX(rect) - extent / 2 - 2,
+                                   NSMidY(rect) - extent / 2 - 2,
+                                   extent + 4, extent + 4));
+  return NSIntersectionRect(rect, [self bounds]);
+}
+
 - (void)advanceNebulae
 {
   int i;
-  double cosine = cos(0.012), sine = sin(0.012);
+  double roll = rotatesSpace ? (cosmosMode ? SPACE_ROLL : 0.012) : 0;
+  double cosine = cos(roll), sine = sin(roll);
 
   for (i = 0; i < nnebulae; i++)
     {
@@ -272,8 +354,8 @@ float randBetween(float lower, float upper)
          makes nearby clouds expand and travel faster than distant clouds. */
       p->x = x * cosine - p->y * sine;
       p->y = x * sine + p->y * cosine;
-      p->z -= 0.018;
-      p->angle += 0.012;
+      p->z -= cosmosMode ? TRAVEL_STEP : 0.018;
+      p->angle += roll;
       p->age++;
       if (p->z < 0.65 || !NSIntersectsRect([self nebulaRectAt: i], [self bounds]))
         [self replaceNebulaAt: i initial: NO];
@@ -300,15 +382,16 @@ float randBetween(float lower, float upper)
       NEBULA *p = &nebulae[order[i]];
       NSRect rect = [self nebulaRectAt: order[i]];
       NSAffineTransform *transform = [NSAffineTransform transform];
-      CGFloat opacity = MIN(1.0, p->age / 45.0) * MIN(1.0, (p->z - 0.65) / 0.4);
+      CGFloat opacity = MIN(1.0, p->age / 180.0) * MIN(1.0, (p->z - 0.65) / 0.4);
 
       [NSGraphicsContext saveGraphicsState];
+      NSRectClip([self nebulaDamageRectAt: order[i]]);
       [transform translateXBy: NSMidX(rect) yBy: NSMidY(rect)];
       [transform rotateByRadians: p->angle];
       [transform concat];
       [p->image drawInRect: NSMakeRect(-rect.size.width / 2, -rect.size.height / 2,
                                       rect.size.width, rect.size.height)
-                 fromRect: NSMakeRect(0, 0, 128, 128)
+                 fromRect: NSMakeRect(0, 0, [p->image size].width, [p->image size].height)
                 operation: NSCompositeSourceOver fraction: MAX(0, opacity)];
       [NSGraphicsContext restoreGraphicsState];
     }
@@ -334,27 +417,27 @@ float randBetween(float lower, float upper)
   switch (selectedColor)
     {
       case 2:
-        [[NSColor colorWithCalibratedRed: 0.3 green: 0.55 blue: 1.0
+        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.62 : 0.3) green: (cosmosMode ? 0.73 : 0.55) blue: (cosmosMode ? 0.94 : 1.0)
                                   alpha: 1.0] set];
         break;
       case 3:
-        [[NSColor colorWithCalibratedRed: 1.0 green: 0.3 blue: 0.3
+        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.92 : 1.0) green: (cosmosMode ? 0.65 : 0.3) blue: (cosmosMode ? 0.58 : 0.3)
                                   alpha: 1.0] set];
         break;
       case 4:
-        [[NSColor colorWithCalibratedRed: 0.72 green: 0.83 blue: 1.0
+        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.77 : 0.72) green: 0.83 blue: (cosmosMode ? 0.94 : 1.0)
                                   alpha: 1.0] set];
         break;
       case 5:
-        [[NSColor colorWithCalibratedRed: 1.0 green: 0.9 blue: 0.55
+        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.88 : 0.9) blue: (cosmosMode ? 0.69 : 0.55)
                                   alpha: 1.0] set];
         break;
       case 6:
-        [[NSColor colorWithCalibratedRed: 1.0 green: 0.6 blue: 0.3
+        [[NSColor colorWithCalibratedRed: (cosmosMode ? 0.94 : 1.0) green: (cosmosMode ? 0.75 : 0.6) blue: (cosmosMode ? 0.56 : 0.3)
                                   alpha: 1.0] set];
         break;
       default:
-        [[NSColor whiteColor] set];
+        [[NSColor colorWithCalibratedWhite: (cosmosMode ? 0.86 : 1.0) alpha: 1.0] set];
         break;
     }
 }
@@ -371,40 +454,61 @@ float randBetween(float lower, float upper)
 
 - oneStep
 {
-  int i, count, starsInArray = 0;
+  int i, starsInArray = 0;
   STAR *p;
   NSRect bounds = [self bounds];
 
-  if (showsNebula) [self advanceNebulae];
-  if (nstars < NSTARS) [self addStar];
+  NSRect damage[NSTARS + 2 * MAXNEBULAE];
+  int damageCount = 0;
+
+  if (showsNebula || cosmosMode)
+    {
+      /* Clear previous star positions and both previous/current cloud bounds.
+         All current clouds are fully cleared before alpha compositing once. */
+      for (i = 0; i < nstars; i++) damage[damageCount++] = stars[i].draw;
+      for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
+      [self advanceNebulae];
+      for (i = 0; i < nnebulae; i++) damage[damageCount++] = [self nebulaDamageRectAt: i];
+    }
+  if (cosmosMode)
+    {
+      while (nstars < NSTARS) [self addStar];
+    }
+  else if (nstars < NSTARS) [self addStar];
   
   for (i=0; i<nstars; i++)
     {
       p = &stars[i];
+      /* Perspective velocity depends on depth, not runaway acceleration.
+         Distant stars barely drift; nearby stars pass gradually outward. */
+      if (cosmosMode)
+        {
+          p->delta = p->distance * TRAVEL_STEP / MAX(0.01, p->depth - TRAVEL_STEP);
+          p->depth -= TRAVEL_STEP;
+        }
+      else p->delta *= p->ddelta;
       p->distance += p->delta;
-      p->delta *= p->ddelta;
-      p->theta += 0.012;
+      if (rotatesSpace) p->theta += cosmosMode ? SPACE_ROLL : 0.012;
       if (p->theta > (2*PI)) p->theta -= (2*PI);
       
       [self convertToXY:p];
       
       // only draw the star if it moved > 1 pixel
-      if (colorsChanged || p->draw.origin.x != p->erase.origin.x ||
+      if (colorsChanged || (cosmosMode && p->depth < 0.8) || p->draw.origin.x != p->erase.origin.x ||
 	  p->draw.origin.y != p->erase.origin.y)
 	{
 	  // add star to the erasure array
 	  b[starsInArray] = p->erase;
 	  
-	  if (p->changemode < 5 &&
-            p->distance > p->changepoint[p->changemode])
-	    {
-	      (p->changemode)++;
-	      p->draw.size = sizeArray[p->changemode];
-	    }
-	  
+          {
+            double size = cosmosMode ? (p->depth < 2.0 ? 2 : 1)
+                                     : MIN(4, 1 + floor(p->delta / 2));
+            p->draw.size = NSMakeSize(size, size);
+          }
+
 	  // clipping is off, so we must not draw outside view.
 	  // replace stars that go too far...
-	  if (p->draw.origin.x < 0 ||
+	  if ((cosmosMode && p->depth < 0.8) || p->draw.origin.x < 0 ||
 	      p->draw.origin.y < 0 ||
 	      p->draw.origin.x + 4 > bounds.size.width ||
 	      p->draw.origin.y + 4 > bounds.size.height)
@@ -419,48 +523,28 @@ float randBetween(float lower, float upper)
 	}
     }
   
-  if (showsNebula || backgroundChanged)
+  if (backgroundChanged)
     {
       /* Restore the entire background before drawing every current star. */
       [self drawRect: bounds];
       backgroundChanged = NO;
     }
+  else if (showsNebula || cosmosMode)
+    {
+      [[NSColor blackColor] set];
+      NSRectFillList(damage, damageCount);
+      [self drawNebulae];
+      [self drawStars];
+    }
   else if (starsInArray)
     {
-      count = 0;
-      while (count < starsInArray)
-	{
-	  // You get the best performance if you put out all the stars
-	  // at once.  This causes noticable flicker, so I put out 
-	  // 100 of the stars per iteration.  This gives reasonable speed
-	  // and flicker is hardly noticable.  Besides, stars
-	  // _should_ flicker a little...
-	  
-	  int t = (starsInArray - count);
-	  i = (t < STARSPERIT)?t:STARSPERIT;
-	  
-	  PSsetgray(0.0);
-	  NSRectFillList(&b[count],i);
-	  
-	  if (starColor == 1)
-            {
-              int j;
-              for (j = count; j < count + i; j++)
-                {
-                  [self setDrawingColorForHue: hues[j]];
-                  NSRectFill(w[j]);
-                }
-            }
-          else
-            {
-              [self setDrawingColorForHue: 0];
-              NSRectFillList(&w[count], i);
-            }
-	  
-	  count += STARSPERIT;
-	}
+      /* Erase all old positions first, then restore even stationary stars
+         that shared a pixel with a moving one. */
+      PSsetgray(0.0);
+      NSRectFillList(b, starsInArray);
+      [self drawStars];
     }
-  
+
   colorsChanged = NO;
   return self;
 }
@@ -469,7 +553,10 @@ float randBetween(float lower, float upper)
 {
   self = [super initWithFrame:frameRect];
   if (self == nil) return nil;
+  cosmosMode = [[NSUserDefaults standardUserDefaults] boolForKey: CosmosKey];
   showsNebula = [[NSUserDefaults standardUserDefaults] boolForKey: NebulaKey];
+  rotatesSpace = [[NSUserDefaults standardUserDefaults] boolForKey: RotationKey];
+  backgroundChanged = YES;
   {
     NSString *color = [[NSUserDefaults standardUserDefaults]
       stringForKey: StarColorKey];
@@ -488,18 +575,36 @@ float randBetween(float lower, float upper)
   return self;
 }
 
-- drawRect:(NSRect)rects 
+- (void)drawStars
 {
   int i;
+  NSRect rects[NSTARS];
 
+  if (starColor != 1)
+    {
+      [self setDrawingColorForHue: 0];
+      for (i = 0; i < nstars; i++) rects[i] = stars[i].draw;
+      if (nstars) NSRectFillList(rects, nstars);
+    }
+  else
+    {
+      for (i = 0; i < nstars; i++)
+        {
+          [self setDrawingColorForHue: stars[i].hue];
+          NSRectFill(stars[i].draw);
+        }
+    }
+}
+
+- drawRect:(NSRect)rects
+{
+  [NSGraphicsContext saveGraphicsState];
+  NSRectClip(rects);
   [[NSColor blackColor] set];
   NSRectFill(rects);
-  if (showsNebula) [self drawNebulae];
-  for (i = 0; i < nstars; i++)
-    {
-      [self setDrawingColorForHue: stars[i].hue];
-      NSRectFill(stars[i].draw);
-    }
+  if (showsNebula || cosmosMode) [self drawNebulae];
+  [self drawStars];
+  [NSGraphicsContext restoreGraphicsState];
   return self;
 }
 
@@ -523,7 +628,6 @@ float randBetween(float lower, float upper)
 
 - replaceStarAt:(int)index
 {
-  float dist, t;
   int tries = 0;
   STAR *p = &stars[index];
   BOOL inBounds;
@@ -547,25 +651,13 @@ float randBetween(float lower, float upper)
   } while (!inBounds);
   
   p->hue = randBetween(0, 1);
-  p->draw.size = sizeArray[0];
-  
-  p->delta = (0.3);
-  
-  //	p->ddelta = randBetween(1.0, 1.1);
+  /* Fill the initial view across depths; recycled stars arrive far away. */
+  p->depth = backgroundChanged ? cbrt(randBetween(1, 216)) : 6.0;
+  p->draw.size = NSMakeSize(p->depth < 2.0 ? 2 : 1, p->depth < 2.0 ? 2 : 1);
+  p->delta = cosmosMode ? p->distance * TRAVEL_STEP / p->depth : 0.3;
   p->ddelta = randBetween(1.0, 1.15);
-  
-  t = randBetween(0, (0.42*radius));
-  dist = MAX(20,t);
-  p->changepoint[0] = p->distance + 5;			// 2nd
-  p->changepoint[1] = p->changepoint[0] - 5 + dist + dist;	// 3rd
-  
-  p->changepoint[2] = p->changepoint[1] + dist;		// 4th
-  p->changepoint[3] = p->changepoint[2] + dist;		// 5th
-  p->changepoint[4] = p->changepoint[3] + dist;		// 6th
-  p->changepoint[5] = 100000;				// never change to 7th
-  
   p->changemode = 0;
-  
+
   p->erase = p->draw;
   
   return self;

@@ -4,6 +4,7 @@
 #include <Foundation/NSString.h>
 #include <Foundation/NSUserDefaults.h>
 #include "InnerSpaceController.h"
+#include <math.h>
 
 #define TIME 0.10
 #define MINIMUM_ANIMATION_DELAY 0.01
@@ -316,6 +317,14 @@
       time = MINIMUM_ANIMATION_DELAY;
     }
     
+  requestedAnimationInterval = time;
+  if ([currentModule respondsToSelector: @selector(animationIntervalForRequestedInterval:)]
+      && [currentModule respondsToSelector: @selector(setAnimationStepScale:)])
+    {
+      time = MAX(time, [currentModule animationIntervalForRequestedInterval: time]);
+      [currentModule setAnimationStepScale: time / requestedAnimationInterval];
+    }
+
   if(![currentModule respondsToSelector: @selector(isBoringScreenSaver)])
     {
       timer = [NSTimer scheduledTimerWithTimeInterval: time
@@ -386,6 +395,16 @@
             [currentModule oneStep];
             [saverWindow flushWindow];
             [currentModule unlockFocus];
+          }
+        /* GPU activation/fallback can change the preferred cadence. Recreate
+           the timer only when that cadence actually changes. */
+        if (atimer != nil && requestedAnimationInterval > 0
+            && [currentModule respondsToSelector: @selector(animationIntervalForRequestedInterval:)]
+            && [currentModule respondsToSelector: @selector(setAnimationStepScale:)])
+          {
+            NSTimeInterval desired = MAX(requestedAnimationInterval,
+              [currentModule animationIntervalForRequestedInterval: requestedAnimationInterval]);
+            if (fabs(desired - [atimer timeInterval]) > 0.000001) [self startTimer];
           }
       NS_HANDLER
 	NSLog(@"EXCEPTION while in running animation: %@",localException);

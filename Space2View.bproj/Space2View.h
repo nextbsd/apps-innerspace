@@ -22,7 +22,7 @@ typedef struct STAR {
 typedef struct NEBULA {
   double x, y, z, radius, angle;
   unsigned int seed;
-  int age;
+  double age;
   BOOL redCloud;
   NSImage *image;
 } NEBULA;
@@ -43,6 +43,10 @@ typedef struct NEBULA {
 	BOOL showsNebula;
 	BOOL cosmosMode;
         NSImage *cpuCloudLayer;
+        NSImage *cpuCloudBackdrop;
+        BOOL cpuBackdropDirty;
+        unsigned int cpuFrame;
+        double animationStepScale;
 	BOOL rotatesSpace;
 	BOOL backgroundChanged;
 	NEBULA nebulae[MAXNEBULAE];
@@ -57,8 +61,11 @@ typedef struct NEBULA {
 }
 
 - convertToXY:(STAR *)p;
-- oneStep;
-- drawRect:(NSRect)rects;
+- (void)oneStep;
+- (NSTimeInterval)animationIntervalForRequestedInterval:(NSTimeInterval)interval;
+- (void)setAnimationStepScale:(double)scale;
+- (void)restoreCPUBackground:(NSRect *)rects count:(int)count;
+- (void)drawRect:(NSRect)rects;
 - (void)setFrame: (NSRect)rect;
 - addStar;
 - replaceStarAt:(int)index;

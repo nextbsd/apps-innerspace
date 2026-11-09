@@ -8,6 +8,9 @@
 /* Optional: YES means the module presented directly, without AppKit focus. */
 - (BOOL) renderAnimationFrame;
 - (NSTimeInterval) animationDelayTime;
+/* Optional pacing with motion compensation for reduced drawing frequency. */
+- (NSTimeInterval)animationIntervalForRequestedInterval:(NSTimeInterval)interval;
+- (void)setAnimationStepScale:(double)scale;
 - (void) didLockFocus;
 
 // inspector methods...

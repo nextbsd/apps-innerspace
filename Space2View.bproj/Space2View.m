@@ -144,6 +144,7 @@ float randBetween(float lower, float upper)
   [self stopGPU];
   RELEASE(gpuStatus);
   RELEASE(cpuCloudLayer);
+  RELEASE(cpuCloudBackdrop);
   RELEASE(inspectorView);
   DEALLOC;
 }
@@ -277,6 +278,8 @@ float randBetween(float lower, float upper)
         }
       if (glRenderer == nil) return NO;
       DESTROY(cpuCloudLayer);
+      DESTROY(cpuCloudBackdrop);
+      cpuBackdropDirty = YES;
       gpuDrawing = YES;
       [self oneStep];
       gpuDrawing = NO;
@@ -316,6 +319,8 @@ float randBetween(float lower, float upper)
 
   cosmosMode = [sender state] == NSOnState;
   DESTROY(cpuCloudLayer);
+  DESTROY(cpuCloudBackdrop);
+  cpuBackdropDirty = YES;
   [[NSUserDefaults standardUserDefaults] setBool: cosmosMode forKey: CosmosKey];
   /* Rebuild only when switching styles; each style reuses textures in flight. */
   for (i = 0; i < MAXNEBULAE; i++) DESTROY(nebulae[i].image);
@@ -339,6 +344,7 @@ float randBetween(float lower, float upper)
 
   /* Keep the bounded texture pool across recycling, toggles, and resizing. */
   nnebulae = 0;
+  cpuBackdropDirty = YES;
   if ((!showsNebula && !cosmosMode) || mean <= 0) return;
   if (!showsNebula) mean = 0;
   /* Poisson sky counts, capped only to bound rendering and memory costs. */
@@ -431,7 +437,7 @@ float randBetween(float lower, float upper)
 {
   int i;
   double roll = rotatesSpace ? (cosmosMode ? SPACE_ROLL : 0.012) : 0;
-  double cosine = cos(roll), sine = sin(roll);
+  double cosine = cos(roll * animationStepScale), sine = sin(roll * animationStepScale);
 
   for (i = 0; i < nnebulae; i++)
     {
@@ -441,9 +447,9 @@ float randBetween(float lower, float upper)
          makes nearby clouds expand and travel faster than distant clouds. */
       p->x = x * cosine - p->y * sine;
       p->y = x * sine + p->y * cosine;
-      p->z -= cosmosMode ? TRAVEL_STEP : 0.018;
-      p->angle += roll;
-      p->age++;
+      p->z -= (cosmosMode ? TRAVEL_STEP : 0.018) * animationStepScale;
+      p->angle += roll * animationStepScale;
+      p->age += animationStepScale;
       if (p->z < 0.65 || !NSIntersectsRect([self nebulaRectAt: i], [self bounds]))
         [self replaceNebulaAt: i initial: NO];
     }
@@ -470,24 +476,38 @@ float randBetween(float lower, float upper)
   if (cpuCloudLayer == nil || !NSEqualSizes([cpuCloudLayer size], size))
     {
       DESTROY(cpuCloudLayer);
+      DESTROY(cpuCloudBackdrop);
+      cpuBackdropDirty = YES;
       cpuCloudLayer = [[NSImage alloc] initWithSize: size];
     }
-  [cpuCloudLayer lockFocus];
-  [[NSColor blackColor] set];
-  NSRectFill(NSMakeRect(0, 0, size.width, size.height));
-  [NSGraphicsContext saveGraphicsState];
-  transform = [NSAffineTransform transform];
-  [transform scaleXBy: size.width / bounds.size.width yBy: size.height / bounds.size.height];
-  [transform translateXBy: -bounds.origin.x yBy: -bounds.origin.y];
-  [transform concat];
-  [self drawNebulaObjects];
-  [NSGraphicsContext restoreGraphicsState];
-  [cpuCloudLayer unlockFocus];
-  [NSGraphicsContext saveGraphicsState];
-  [[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationLow];
-  [cpuCloudLayer drawInRect: bounds fromRect: NSMakeRect(0, 0, size.width, size.height)
-                 operation: NSCompositeCopy fraction: 1.0];
-  [NSGraphicsContext restoreGraphicsState];
+  if (cpuCloudBackdrop == nil || cpuBackdropDirty)
+    {
+      [cpuCloudLayer lockFocus];
+      [[NSColor blackColor] set];
+      NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+      [NSGraphicsContext saveGraphicsState];
+      transform = [NSAffineTransform transform];
+      [transform scaleXBy: size.width / bounds.size.width yBy: size.height / bounds.size.height];
+      [transform translateXBy: -bounds.origin.x yBy: -bounds.origin.y];
+      [transform concat];
+      [self drawNebulaObjects];
+      [NSGraphicsContext restoreGraphicsState];
+      [cpuCloudLayer unlockFocus];
+      if (cpuCloudBackdrop == nil)
+        cpuCloudBackdrop = [[NSImage alloc] initWithSize: bounds.size];
+      [cpuCloudBackdrop lockFocus];
+      [NSGraphicsContext saveGraphicsState];
+      [[NSGraphicsContext currentContext] setImageInterpolation: NSImageInterpolationLow];
+      [cpuCloudLayer drawInRect: NSMakeRect(0, 0, bounds.size.width, bounds.size.height)
+                      fromRect: NSMakeRect(0, 0, size.width, size.height)
+                     operation: NSCompositeCopy fraction: 1.0];
+      [NSGraphicsContext restoreGraphicsState];
+      [cpuCloudBackdrop unlockFocus];
+      cpuBackdropDirty = NO;
+    }
+  [cpuCloudBackdrop drawInRect: bounds
+                      fromRect: NSMakeRect(0, 0, bounds.size.width, bounds.size.height)
+                     operation: NSCompositeCopy fraction: 1.0];
 }
 
 - (void)drawNebulaObjects
@@ -579,7 +599,35 @@ float randBetween(float lower, float upper)
 }
 
 
-- oneStep
+- (NSTimeInterval)animationIntervalForRequestedInterval:(NSTimeInterval)interval
+{
+  return glRenderer != nil ? interval : MAX(0.1, interval);
+}
+
+- (void)setAnimationStepScale:(double)scale
+{
+  animationStepScale = MAX(1, scale);
+}
+
+- (void)restoreCPUBackground:(NSRect *)rects count:(int)count
+{
+  NSBezierPath *clip;
+  NSRect bounds = [self bounds];
+  int i;
+
+  if (count == 0) return;
+  clip = [NSBezierPath bezierPath];
+  [clip setWindingRule: NSNonZeroWindingRule];
+  for (i = 0; i < count; i++) [clip appendBezierPathWithRect: NSIntegralRect(rects[i])];
+  [NSGraphicsContext saveGraphicsState];
+  [clip addClip];
+  [cpuCloudBackdrop drawInRect: bounds
+                      fromRect: NSMakeRect(0, 0, bounds.size.width, bounds.size.height)
+                     operation: NSCompositeCopy fraction: 1];
+  [NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)oneStep
 {
   int i, starsInArray = 0;
   STAR *p;
@@ -588,6 +636,7 @@ float randBetween(float lower, float upper)
   NSRect damage[NSTARS + 2 * MAXNEBULAE];
   int damageCount = 0;
 
+  if (cosmosMode && !gpuDrawing && (++cpuFrame % 2) == 0) cpuBackdropDirty = YES;
   if (showsNebula || cosmosMode)
     {
       /* Clear previous star positions and both previous/current cloud bounds.
@@ -614,12 +663,21 @@ float randBetween(float lower, float upper)
          Distant stars barely drift; nearby stars pass gradually outward. */
       if (cosmosMode)
         {
-          p->delta = p->distance * TRAVEL_STEP / MAX(0.01, p->depth - TRAVEL_STEP);
-          p->depth -= TRAVEL_STEP;
+          p->delta = p->distance * TRAVEL_STEP * animationStepScale / MAX(0.01, p->depth - TRAVEL_STEP * animationStepScale);
+          p->depth -= TRAVEL_STEP * animationStepScale;
         }
-      else p->delta *= p->ddelta;
+      else
+        {
+          /* Sum the original exponential steps over this longer frame. */
+          double growth = pow(p->ddelta, animationStepScale);
+          double travel = p->ddelta > 1.000001
+            ? p->delta * p->ddelta * (growth - 1) / (p->ddelta - 1)
+            : p->delta * animationStepScale;
+          p->delta *= growth;
+          p->distance += travel - p->delta;
+        }
       p->distance += p->delta;
-      if (rotatesSpace) p->theta += cosmosMode ? SPACE_ROLL : 0.012;
+      if (rotatesSpace) p->theta += (cosmosMode ? SPACE_ROLL : 0.012) * animationStepScale;
       if (p->theta > (2*PI)) p->theta -= (2*PI);
       
       [self convertToXY:p];
@@ -658,7 +716,7 @@ float randBetween(float lower, float upper)
     {
       colorsChanged = NO;
       backgroundChanged = NO;
-      return self;
+      return;
     }
   if (backgroundChanged)
     {
@@ -666,7 +724,13 @@ float randBetween(float lower, float upper)
       [self drawRect: bounds];
       backgroundChanged = NO;
     }
-  else if (showsNebula || cosmosMode)
+  else if (cosmosMode)
+    {
+      if (cpuCloudBackdrop == nil || cpuBackdropDirty) [self drawNebulae];
+      else [self restoreCPUBackground: b count: starsInArray];
+      [self drawStars];
+    }
+  else if (showsNebula)
     {
       [[NSColor blackColor] set];
       if (damageCount) NSRectFillList(damage, damageCount);
@@ -683,13 +747,14 @@ float randBetween(float lower, float upper)
     }
 
   colorsChanged = NO;
-  return self;
+  return;
 }
 
 - initWithFrame:(NSRect)frameRect
 {
   self = [super initWithFrame:frameRect];
   if (self == nil) return nil;
+  animationStepScale = 1;
   gpuEnabled = [[NSUserDefaults standardUserDefaults] objectForKey: @"Space2UseGPU"] == nil
     || [[NSUserDefaults standardUserDefaults] boolForKey: @"Space2UseGPU"];
   [self updateGPUStatus: gpuEnabled ? @"GPU: checked when the animation starts."
@@ -737,12 +802,12 @@ float randBetween(float lower, float upper)
     }
 }
 
-- drawRect:(NSRect)rects
+- (void)drawRect:(NSRect)rects
 {
   if (glRenderer != nil)
     {
       [self drawOpenGLScene];
-      return self;
+      return;
     }
   [NSGraphicsContext saveGraphicsState];
   NSRectClip(rects);
@@ -751,7 +816,7 @@ float randBetween(float lower, float upper)
   if (showsNebula || cosmosMode) [self drawNebulae];
   [self drawStars];
   [NSGraphicsContext restoreGraphicsState];
-  return self;
+  return;
 }
 
 - (void) setFrame:(NSRect)rect
@@ -760,6 +825,8 @@ float randBetween(float lower, float upper)
   
   [super setFrame: rect];
   DESTROY(cpuCloudLayer);
+  DESTROY(cpuCloudBackdrop);
+  cpuBackdropDirty = YES;
   [self resetNebulae];
   backgroundChanged = YES;
   [self setRadius];

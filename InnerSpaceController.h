@@ -21,6 +21,7 @@
   // internal vars.
   SaverWindow *saverWindow;
   NSTimer *timer;
+  NSTimeInterval requestedAnimationInterval;
   ModuleView *currentModule;
   NSMutableDictionary *modules;
   NSUserDefaults *defaults;

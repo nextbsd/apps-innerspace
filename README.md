@@ -185,7 +185,11 @@ Native settings panels replace the remaining Gorm inspectors:
   a CPU-fallback reason. Unsupported and recognized software-only drivers
   retain the existing CPU renderer. The GNUstep build requires OpenGL headers
   and libGL (the OpenGL framework on Darwin). COSMOS CPU fallback uses a
-  bounded cloud-compositing surface while keeping stars full resolution.
+  bounded cloud-compositing surface and cached backdrop while keeping stars full
+  resolution. Software rendering is capped at 10 fps, with COSMOS clouds updated
+  every second frame; compensated motion preserves travel speed. This reduces
+  CPU use at the cost of smoothness and one full-size backdrop in memory.
+  Hardware OpenGL keeps the requested frame rate.
   A software-only VNC display still uses CPU rendering.
   Oversized module inspectors scroll inside the Controls box so all options
   and renderer status remain accessible.

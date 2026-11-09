@@ -53,10 +53,15 @@ Missing contexts, unsupported backends, and recognized software renderers
 (llvmpipe, softpipe, SwiftShader, and software-labelled drivers) use the existing
 CPU renderer automatically. The inspector checkbox can also force CPU rendering.
 For large COSMOS scenes, CPU fallback composites diffuse gas on a reusable surface
-capped at 640 points on its long axis and scales it once to the view. Stars stay
-at native resolution. Hardware rendering is unchanged. This reduces software
-blending work, but copying a large desktop and remote-display encoding still cost
-CPU time. A VNC session reporting llvmpipe is not hardware accelerated simply
+capped at 640 points on its long axis. Software rendering is capped at 10
+frames per second, with motion steps compensated to preserve the speed slider's
+travel rate. COSMOS clouds refresh every second drawing frame (at most 5 fps).
+A full-size opaque backdrop caches the scaled clouds; intervening frames restore
+only old star positions before drawing stars at native resolution. This cache
+uses roughly four bytes per pixel (about 28 MiB at 3700x2000), trading memory
+and animation smoothness for lower CPU use. Hardware rendering keeps the
+requested cadence. Copying a large desktop and remote-display encoding still
+cost CPU time. A VNC session reporting llvmpipe is not hardware accelerated simply
 because "Use GPU rendering" is checked.
 The first failed initialization is remembered until the setting or window changes
 so unsupported systems do not repeatedly pay initialization costs.
@@ -98,7 +103,8 @@ GNUstep regression checks (from the project directory):
 
 The test checks the default, toggle, restoration, 600 animation frames, resizing,
 removal, perspective motion, catalog density, expanded palette, texture reuse,
-rotation controls, and COSMOS default/persistence/red-cloud behavior. Render samples go to /tmp/innerspace-nebula*.png.
+rotation controls, COSMOS default/persistence/red-cloud behavior, compensated
+motion, and cached-background restoration without star trails. Render samples go to /tmp/innerspace-nebula*.png.
 
 OpenGL regression tests (Xvfb must have GLX/Mesa support):
 
@@ -111,7 +117,7 @@ texture reuse, mode changes, resizing, moving between windows, GPU preference
 persistence, and automatic software-driver fallback. Pixel readback is test-only.
 The rendered sample is /tmp/innerspace-opengl.png.
 
-Host direct-presentation routing regression:
+Host direct-presentation routing and fallback/GPU timer transition regression:
 
   clang $(gnustep-config --objc-flags) Tests/DirectRenderingTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-direct-tests $(gnustep-config --gui-libs)
   /tmp/innerspace-direct-tests

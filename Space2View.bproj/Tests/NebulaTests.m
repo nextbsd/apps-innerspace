@@ -203,6 +203,31 @@ int main(int argc, char **argv)
   [view drawRect: [view bounds]];
   [canvas unlockFocus];
   Check(SamePixels(animated, Snapshot(canvas)), @"Scaled CPU clouds redraw consistently");
+  {
+    NSBitmapImageRep *cached = Snapshot([view valueForKey: @"cpuCloudLayer"]);
+    NEBULA *clouds = (NEBULA *)((char *)view + ivar_getOffset(class_getInstanceVariable(viewClass, "nebulae")));
+    double beforeZ = clouds[0].z;
+    [view setValue: [NSNumber numberWithInt: 0] forKey: @"cpuFrame"];
+    [view setAnimationStepScale: 2];
+    [canvas lockFocus];
+    [view oneStep];
+    [canvas unlockFocus];
+    Check(fabs(clouds[0].z - (beforeZ - 0.004)) < 0.000001,
+          @"Reduced drawing cadence preserves camera travel");
+    Check(SamePixels(cached, Snapshot([view valueForKey: @"cpuCloudLayer"])),
+          @"Intermediate star frame reuses cloud cache");
+    animated = Snapshot(canvas);
+    [canvas lockFocus];
+    [view drawRect: [view bounds]];
+    [canvas unlockFocus];
+    Check(SamePixels(animated, Snapshot(canvas)), @"Restoring star regions leaves no trails");
+    [canvas lockFocus];
+    [view oneStep];
+    [canvas unlockFocus];
+    Check(!SamePixels(cached, Snapshot([view valueForKey: @"cpuCloudLayer"])),
+          @"Cloud cache refreshes on the next frame");
+    [view setAnimationStepScale: 1];
+  }
   [view setFrame: NSMakeRect(0, 0, 360, 640)];
   RELEASE(canvas);
   canvas = [[NSImage alloc] initWithSize: NSMakeSize(360, 640)];

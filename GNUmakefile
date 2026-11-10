@@ -126,6 +126,7 @@ SUBPROJECTS = Weather.bproj Aquarium.bproj ConnectionMachine.bproj Black.bproj B
 -include GNUmakefile.preamble
 -include GNUmakefile.local
 include $(GNUSTEP_MAKEFILES)/aggregate.make
+InnerSpace_GUI_LIBS += -lX11
 include $(GNUSTEP_MAKEFILES)/application.make
 -include GNUmakefile.postamble
 

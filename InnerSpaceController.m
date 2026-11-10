@@ -251,7 +251,16 @@
     }
   
   [self startTimer];
-  [saverWindow makeKeyAndOrderFront: self];
+  if (desktop)
+    {
+      /* Desktop level is only a hint to a window manager, so without one
+         the window has to send itself behind every other window. */
+      [saverWindow orderBack: self];
+    }
+  else
+    {
+      [saverWindow makeKeyAndOrderFront: self];
+    }
 }
 
 - (void) destroySaverWindow

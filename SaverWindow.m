@@ -2,6 +2,10 @@
 
 #include <AppKit/AppKit.h>
 #include "SaverWindow.h"
+#if !defined(__APPLE__)
+#include <GNUstepGUI/GSDisplayServer.h>
+#include <X11/Xlib.h>
+#endif
 
 @implementation SaverWindow
 - (void) setAction: (SEL)a forTarget: (id)t
@@ -31,6 +35,21 @@
 - (void) mouseUp: (NSEvent *)theEvent
 {
   [self _triggerAction];
+}
+
+/* Desktop level is only a hint to a window manager, so without one this
+   window has to send itself behind the others whenever it is ordered. */
+- (void) orderWindow: (NSWindowOrderingMode)place relativeTo: (NSInteger)number
+{
+  [super orderWindow: place relativeTo: number];
+#if !defined(__APPLE__)
+  if ([self level] == NSDesktopWindowLevel && place != NSWindowOut)
+    {
+      Display *display = (Display *)[GSServerForWindow(self) serverDevice];
+      XLowerWindow(display, (Window)[self windowRef]);
+      XFlush(display);
+    }
+#endif
 }
 
 - (BOOL) canBecomeKeyWindow

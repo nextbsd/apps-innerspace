@@ -33,6 +33,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 # The application to be compiled
 BUNDLE_NAME = SporView
 BUNDLE_EXTENSION = .InnerSpace
+SporView_STANDARD_INSTALL = no
 
 # The Objective-C source files to be compiled
 SporView_OBJC_FILES = SporView.m draw.m sporen6.m spordefs.m

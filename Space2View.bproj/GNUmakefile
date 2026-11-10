@@ -33,6 +33,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 # The application to be compiled
 BUNDLE_NAME = Space2View
 BUNDLE_EXTENSION = .InnerSpace
+Space2View_STANDARD_INSTALL = no
 
 # The Objective-C source files to be compiled
 Space2View_OBJC_FILES = Space2View.m Space2GLView.m

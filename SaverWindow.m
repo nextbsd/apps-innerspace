@@ -37,6 +37,42 @@
   [self _triggerAction];
 }
 
+/* Clicking the desktop makes the workspace app (GSWorkspaceApplication,
+   Workspace on NextBSD) the active app, as clicking the desktop brings
+   the Finder forward on macOS: the desktop is the workspace's, even
+   though InnerSpace draws it. */
+- (void) mouseDown: (NSEvent *)theEvent
+{
+  NSString *name;
+
+  if ([self level] != NSDesktopWindowLevel)
+    {
+      return;
+    }
+  name = [[NSUserDefaults standardUserDefaults]
+	   stringForKey: @"GSWorkspaceApplication"];
+  if ([name length] == 0
+      || [name isEqualToString: [[NSProcessInfo processInfo] processName]])
+    {
+      return;
+    }
+  NS_DURING
+    {
+      NSConnection *connection;
+      id app;
+
+      connection = [NSConnection connectionWithRegisteredName: name host: @""];
+      [connection setRequestTimeout: 2.0];
+      [connection setReplyTimeout: 2.0];
+      app = [connection rootProxy];
+      [app activateIgnoringOtherApps: YES];
+    }
+  NS_HANDLER
+    {
+    }
+  NS_ENDHANDLER
+}
+
 /* Under X, desktop level is only a hint to a window manager, so without one
    this window has to send itself behind the others whenever it is ordered.
    Other backends (the NextBSD WindowServer) keep desktop-level windows at

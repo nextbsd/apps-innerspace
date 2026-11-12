@@ -60,9 +60,14 @@
   return YES;
 }
 
+/* Never the main window: it only shows the saver, and in the in-window
+   menu style (NBMenuStyle inwindow) GNUstep puts the main menu in every
+   window that can become main, which put a menu bar along the top of
+   the desktop, behind the other apps' windows and under a top Dock.
+   Being key is enough for the keys and clicks that stop the saver. */
 - (BOOL) canBecomeMainWindow
 {
-  return YES;
+  return NO;
 }
 
 - (void) hide: (id)sender

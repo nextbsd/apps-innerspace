@@ -37,13 +37,16 @@
   [self _triggerAction];
 }
 
-/* Desktop level is only a hint to a window manager, so without one this
-   window has to send itself behind the others whenever it is ordered. */
+/* Under X, desktop level is only a hint to a window manager, so without one
+   this window has to send itself behind the others whenever it is ordered.
+   Other backends (the NextBSD WindowServer) keep desktop-level windows at
+   the bottom themselves, and their serverDevice isn't an X Display. */
 - (void) orderWindow: (NSWindowOrderingMode)place relativeTo: (NSInteger)number
 {
   [super orderWindow: place relativeTo: number];
 #if !defined(__APPLE__)
-  if ([self level] == NSDesktopWindowLevel && place != NSWindowOut)
+  if ([self level] == NSDesktopWindowLevel && place != NSWindowOut
+      && [GSServerForWindow(self) isKindOfClass: NSClassFromString(@"XGServer")])
     {
       Display *display = (Display *)[GSServerForWindow(self) serverDevice];
       XLowerWindow(display, (Window)[self windowRef]);

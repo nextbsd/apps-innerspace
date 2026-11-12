@@ -47,6 +47,7 @@
 - (NSMutableDictionary *) modules;
 - (NSArray *) sortedModuleNames;
 - (void) destroySaverWindow;
+- (void) screenParametersDidChange: (NSNotification *)notification;
 - (void) createSaverWindow: (BOOL)desktop;
 - (void) startTimer;
 - (void) stopTimer;

@@ -161,10 +161,18 @@
   [self loadDefaults];
   [self loadModule: currentModuleName];
   RETAIN(emptyView); // hold on to this.
+
+  /* The desktop window has to follow the screen when its size changes. */
+  [[NSNotificationCenter defaultCenter]
+    addObserver: self
+       selector: @selector(screenParametersDidChange:)
+           name: NSApplicationDidChangeScreenParametersNotification
+         object: nil];
 }
 
 - (void) dealloc
 {
+  [[NSNotificationCenter defaultCenter] removeObserver: self];
   [self destroySaverWindow];
   [self stopTimer];
   RELEASE(currentModule);
@@ -261,6 +269,26 @@
     {
       [saverWindow makeKeyAndOrderFront: self];
     }
+}
+
+- (void) screenParametersDidChange: (NSNotification *)notification
+{
+  /* Use the full frame, not visibleFrame: the Dock draws over the desktop. */
+  NSRect frame = [[NSScreen mainScreen] frame];
+
+  if(saverWindow == nil || NSEqualRects([saverWindow frame], frame))
+    {
+      return;
+    }
+
+  [saverWindow setFrame: frame display: NO];
+  if(currentModule != nil)
+    {
+      [currentModule setFrame: [[saverWindow contentView] bounds]];
+      [currentModule setNeedsDisplay: YES];
+    }
+  [saverWindow display];
+  [saverWindow flushWindow];
 }
 
 - (void) destroySaverWindow

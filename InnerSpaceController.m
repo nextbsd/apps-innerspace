@@ -402,13 +402,83 @@
     }
 }
 
+- (void) stopDisplayPacing
+{
+  if(!displayPaced)
+    {
+      return;
+    }
+  displayPaced = NO;
+  NS_DURING
+    [currentModule setAnimationFrameTarget: nil action: NULL];
+  NS_HANDLER
+    NSLog(@"EXCEPTION: %@", localException);
+  NS_ENDHANDLER
+}
+
 - (void) stopTimer
 {
+  [self stopDisplayPacing];
   if(timer != nil)
     {
       [timer invalidate];
       RELEASE(timer);
       timer = nil;
+    }
+}
+
+/* A module that presents directly can be paced by the display instead
+   of the timer: it says when the display is ready for its next frame
+   (on WindowServer's frame-done, after the last one is on screen), so
+   it draws at most a frame per refresh, and nothing while its frames
+   aren't being shown. */
+- (void) startDisplayPacing
+{
+  BOOL paced = NO;
+
+  if(displayPaced || ![currentModule respondsToSelector:
+			 @selector(setAnimationFrameTarget:action:)])
+    {
+      return;
+    }
+  NS_DURING
+    paced = [currentModule setAnimationFrameTarget: self
+					    action: @selector(displayFrameDue:)];
+  NS_HANDLER
+    NSLog(@"EXCEPTION: %@", localException);
+  NS_ENDHANDLER
+  if(!paced)
+    {
+      return;
+    }
+  displayPaced = YES;
+  if(timer != nil)
+    {
+      [timer invalidate];
+      RELEASE(timer);
+    }
+  /* Only a watchdog now, in case a frame never comes back. */
+  timer = RETAIN([NSTimer scheduledTimerWithTimeInterval: 1.0
+		  target: self
+		  selector: @selector(displayWatchdog:)
+		  userInfo: nil
+		  repeats: YES]);
+}
+
+- (void) displayFrameDue: (id)sender
+{
+  if(displayPaced && saverWindow != nil)
+    {
+      [self runAnimation: nil];
+    }
+}
+
+- (void) displayWatchdog: (NSTimer *)atimer
+{
+  if(displayPaced
+     && [NSDate timeIntervalSinceReferenceDate] - lastDirectFrame > 1.0)
+    {
+      [self runAnimation: nil];
     }
 }
 
@@ -424,10 +494,21 @@
         if ([currentModule respondsToSelector: @selector(renderAnimationFrame)]
             && [currentModule renderAnimationFrame])
           {
-            /* Direct renderers present their own drawable. */
+            /* Direct renderers present their own drawable, and may be
+               paced by the display from now on. */
+            lastDirectFrame = [NSDate timeIntervalSinceReferenceDate];
+            [self startDisplayPacing];
+            if (displayPaced)
+              atimer = nil;	/* no cadence to keep; the timer is gone */
           }
         else
           {
+            if (displayPaced)
+              {
+                /* Back on the CPU: back on the timer. */
+                [self startTimer];
+                atimer = nil;
+              }
             [currentModule lockFocus];
             if ([currentModule respondsToSelector: @selector(didLockFocus)])
               [currentModule didLockFocus];

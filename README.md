@@ -219,6 +219,44 @@ On macOS with a GNUstep toolchain, explicitly select that build with:
 make INNERSPACE_PLATFORM=gnustep
 ```
 
+### Kaleidoscope on the GPU
+
+Kaleidoscope draws with OpenGL when the GNUstep backend can make an
+`NSOpenGLContext` with a hardware renderer (on NextBSD, a WindowServer with
+GPU buffers; see libs-back's `NextBSDOpenGL.h`), and with cairo on the CPU
+otherwise (no OpenGL, a software renderer, or a failure while drawing). The
+GNUstep build links libGL for it.
+
+The CPU version darkens the whole window by 12% every step and draws the
+particles over it, so every disc fades by 0.88 a step. Darkening commutes
+with drawing over, so the GPU version draws the same picture from scratch
+each frame: the discs of the last 36 steps (after that a disc is below two
+levels of 255, where the CPU version's 8-bit fade stops taking anything
+away), oldest first over black, each with its colour scaled by
+0.88 per step of age. They stay in a vertex buffer, one step's 18 particles
+in their 16 mirrored copies at a time, and are drawn as point sprites whose
+fragment shader draws the antialiased fill and 1-point outline. There's no
+full-window fade pass, no copy of the previous frame and no read-back. The
+steps keep the CPU version's 30 ms; between them the newest discs glide
+toward the next step's, fading in, so a frame at any rate moves smoothly
+while the trails stay as before. Frames have a pixel per backing pixel on
+HiDPI screens (`-wantsBestResolutionOpenGLSurface`).
+
+Frames are paced by the display: a module that presents directly can
+implement `-setAnimationFrameTarget:action:` (ModuleView.h) and tell the host
+when the display is ready for the next frame; Kaleidoscope does so when its
+context reports frame completion (WindowServer's frame-done on NextBSD). The
+host then draws a frame each time instead of on its timer, which only stays
+as a one-second watchdog, and goes back to the timer if the module falls back
+to the CPU. With nothing on screen being redrawn, no frames are drawn.
+
+The regression test for the host's side (no display needed):
+
+```sh
+clang $(gnustep-config --objc-flags) Tests/DirectRenderingTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-direct-tests $(gnustep-config --gui-libs) -lX11
+/tmp/innerspace-direct-tests
+```
+
 The menu-bar status item and Dock preference belong to the Cocoa host only;
 GNUstep retains its original application menus, Gorm interface, startup, and
 module-switching behavior. Session mode restoration is Cocoa-only. No Cocoa

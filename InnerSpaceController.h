@@ -22,6 +22,9 @@
   SaverWindow *saverWindow;
   NSTimer *timer;
   NSTimeInterval requestedAnimationInterval;
+  // frames paced by the display (-setAnimationFrameTarget:action:)
+  BOOL displayPaced;
+  NSTimeInterval lastDirectFrame;
   ModuleView *currentModule;
   NSMutableDictionary *modules;
   NSUserDefaults *defaults;
@@ -53,6 +56,7 @@
 - (void) stopTimer;
 - (void) resetTimer;
 - (void) runAnimation: (NSTimer *)atimer;
+- (void) displayFrameDue: (id)sender;
 - (void) loadModule: (NSString *)moduleName;
 - (void) loadDefaults;
 - (void) findModulesInDirectory: (NSString *) directory;

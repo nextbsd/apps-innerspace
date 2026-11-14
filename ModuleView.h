@@ -11,6 +11,13 @@
 /* Optional pacing with motion compensation for reduced drawing frequency. */
 - (NSTimeInterval)animationIntervalForRequestedInterval:(NSTimeInterval)interval;
 - (void)setAnimationStepScale:(double)scale;
+/* Optional, for modules that present directly: YES means the module
+   will send action to target (with itself as the argument) whenever the
+   display is ready for its next frame (e.g. when the frame it presented
+   is on screen), and the host draws a frame each time instead of on its
+   timer. NO, or a later -renderAnimationFrame answering NO, keeps or
+   puts back the timer. A nil target stops the messages. */
+- (BOOL)setAnimationFrameTarget:(id)target action:(SEL)action;
 - (void) didLockFocus;
 
 // inspector methods...

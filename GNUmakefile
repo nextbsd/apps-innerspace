@@ -65,6 +65,7 @@ Weather.bproj/Weather.InnerSpace \
 DictionaryWords.bproj/DictionaryWords.InnerSpace \
 FlyingToasters.bproj/FlyingToasters.InnerSpace \
 Kaleidoscope.bproj/Kaleidoscope.InnerSpace \
+TomorrowNeverKnows.bproj/TomorrowNeverKnows.InnerSpace \
 SignalHead.bproj/SignalHead.InnerSpace \
 StepMan.bproj/StepMan.InnerSpace \
 Neko.bproj/Neko.InnerSpace \
@@ -116,6 +117,7 @@ SUBPROJECTS = Weather.bproj Aquarium.bproj ConnectionMachine.bproj Black.bproj B
         BouncyClock.bproj \
         FlyingToasters.bproj \
         Kaleidoscope.bproj \
+        TomorrowNeverKnows.bproj \
         SignalHead.bproj \
         StepMan.bproj \
         Neko.bproj \

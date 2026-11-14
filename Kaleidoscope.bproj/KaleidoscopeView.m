@@ -1,6 +1,7 @@
 #include "KaleidoscopeView.h"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #define RAND_FLOAT ((float)rand() / (float)RAND_MAX)
@@ -46,6 +47,12 @@
   return @"Kaleidoscope";
 }
 
+- (void)dealloc
+{
+  [self stopOpenGL];
+  [super dealloc];
+}
+
 - (void)setFrame:(NSRect)frame
 {
   int i;
@@ -55,6 +62,155 @@
   for(i = 0; i < KaleidoscopeParticleCount; i++)
     {
       [self resetParticle: i];
+    }
+  glLastTime = 0;
+}
+
+/* ---- OpenGL ---- */
+
+/* A drawable with a pixel per backing pixel on HiDPI screens (the
+   NextBSD backend asks, as macOS does). */
+- (BOOL)wantsBestResolutionOpenGLSurface
+{
+  return YES;
+}
+
+- (void)stopOpenGL
+{
+  [gl invalidate];
+  DESTROY(gl);
+  glLastTime = 0;
+}
+
+- (void)viewWillMoveToWindow:(NSWindow *)newWindow
+{
+  if(newWindow != [self window])
+    {
+      /* A new window gets a new context. */
+      [self stopOpenGL];
+      glTried = NO;
+    }
+  [super viewWillMoveToWindow: newWindow];
+}
+
+/* How particle i is drawn now (KaleidoscopeGL.h). */
+- (void)getDisc:(KaleidoscopeDisc *)disc forParticle:(int)i
+{
+  KaleidoscopeParticle *particle = &particles[i];
+  float pulse = 0.72 + (0.28 * sinf(animationPhase * 5.0 + particle->phase));
+
+  disc->x = particle->position.x;
+  disc->y = particle->position.y;
+  disc->radius = particle->radius * pulse;
+  disc->hue = particle->hue;
+}
+
+- (void)getDiscs:(KaleidoscopeDisc *)discs
+{
+  int i;
+
+  for(i = 0; i < KaleidoscopeParticleCount; i++)
+    {
+      [self getDisc: &discs[i] forParticle: i];
+    }
+}
+
+- (BOOL)renderAnimationFrame
+{
+  KaleidoscopeDisc head[KaleidoscopeParticleCount];
+  NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+  float weight;
+  int i, steps = 0;
+
+  if([self window] == nil)
+    {
+      return NO;
+    }
+  if(gl == nil)
+    {
+      if(glTried)
+	{
+	  return NO;
+	}
+      glTried = YES;
+      gl = [[KaleidoscopeGL alloc] initWithView: self];
+      if(gl == nil)
+	{
+	  return NO;
+	}
+      glLastTime = 0;
+    }
+  /* The last frame isn't on screen yet (the host's watchdog): wait,
+     unless it's been so long that it never will be. */
+  if([gl framePending] && now - [gl lastFlush] < 2.0)
+    {
+      return YES;
+    }
+
+  if(glLastTime == 0)
+    {
+      /* Start the trails: this step is a stamp, the next one ahead. */
+      [gl reset];
+      glClock = glStep = 0;
+      [self getDiscs: glFrom];
+      [gl addStep: glStep discs: glFrom count: KaleidoscopeParticleCount];
+      [self advanceParticles];
+      [self getDiscs: glTo];
+    }
+  else
+    {
+      /* The steps keep the CPU version's rate, whatever the frame rate. */
+      glClock += MIN(now - glLastTime, 0.25) / [self animationDelayTime];
+    }
+  glLastTime = now;
+  while(glClock >= glStep + 1.0 && steps++ < 8)
+    {
+      glStep += 1.0;
+      memcpy(glFrom, glTo, sizeof(glFrom));
+      [gl addStep: glStep discs: glFrom count: KaleidoscopeParticleCount];
+      [self advanceParticles];
+      [self getDiscs: glTo];
+    }
+  if(glClock >= glStep + 1.0)
+    {
+      glClock = glStep + 0.999;	/* fell behind: drop steps */
+    }
+
+  /* The head glides from this step's discs to the next step's. */
+  weight = (float)(glClock - glStep);
+  for(i = 0; i < KaleidoscopeParticleCount; i++)
+    {
+      head[i].x = glFrom[i].x + (glTo[i].x - glFrom[i].x) * weight;
+      head[i].y = glFrom[i].y + (glTo[i].y - glFrom[i].y) * weight;
+      head[i].radius = glFrom[i].radius
+	+ (glTo[i].radius - glFrom[i].radius) * weight;
+      head[i].hue = glTo[i].hue;
+    }
+  if(![gl drawAt: glClock head: head count: KaleidoscopeParticleCount
+	  weight: weight])
+    {
+      NSLog(@"Kaleidoscope: OpenGL drawing failed; drawing on the CPU");
+      [self stopOpenGL];
+      hasDrawnBackground = NO;
+      return NO;
+    }
+  return YES;
+}
+
+/* The host draws a frame whenever the last one is on screen. */
+- (BOOL)setAnimationFrameTarget:(id)target action:(SEL)action
+{
+  frameTarget = target;
+  frameAction = action;
+  return [gl setFrameTarget: target != nil ? self : nil
+		   selector: @selector(glFrameDone:)];
+}
+
+- (void)glFrameDone:(id)sender
+{
+  if(frameTarget != nil && gl != nil)
+    {
+      [frameTarget performSelector: frameAction withObject: self];
     }
 }
 
@@ -105,6 +261,18 @@
   [[NSColor colorWithCalibratedWhite: 0.0 alpha: 0.12] set];
   NSRectFillUsingOperation(bounds, NSCompositeSourceOver);
 
+  [self advanceParticles];
+  for(i = 0; i < KaleidoscopeParticleCount; i++)
+    {
+      [self drawParticle: &particles[i] inBounds: bounds];
+    }
+}
+
+- (void)advanceParticles
+{
+  NSRect bounds = [self bounds];
+  int i;
+
   animationPhase += 0.035;
   for(i = 0; i < KaleidoscopeParticleCount; i++)
     {
@@ -135,8 +303,6 @@
 	      particle->hue -= 1.0;
 	    }
 	}
-
-      [self drawParticle: particle inBounds: bounds];
     }
 }
 

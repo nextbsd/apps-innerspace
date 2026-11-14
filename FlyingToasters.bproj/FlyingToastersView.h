@@ -18,6 +18,7 @@ typedef struct flying_toaster
   float animationPhase;
 }
 - (void)oneStep;
+- (void)stepWithOwnFocus;
 - (void)resetToaster:(int)index offscreen:(BOOL)offscreen;
 - (void)drawToaster:(FlyingToaster *)toaster;
 - (void)drawWingWithScale:(float)scale flap:(float)flap mirrored:(BOOL)mirrored;

@@ -89,13 +89,11 @@
   NSRectFill(rects);
 }
 
-- (void)oneStep
+/* Move every toaster one step. */
+- (void)advance
 {
   NSRect bounds = [self bounds];
   int i;
-
-  [[NSColor blackColor] set];
-  NSRectFill(bounds);
 
   animationPhase += 0.32;
   for(i = 0; i < FlyingToastersCount; i++)
@@ -112,8 +110,92 @@
 	{
 	  [self resetToaster: i offscreen: YES];
 	}
+    }
+}
 
-      [self drawToaster: toaster];
+- (void)oneStep
+{
+  int i;
+
+  [[NSColor blackColor] set];
+  NSRectFill([self bounds]);
+  [self advance];
+  for(i = 0; i < FlyingToastersCount; i++)
+    {
+      [self drawToaster: &toasters[i]];
+    }
+}
+
+/* All a toaster can cover, wings up or down, with its outline. */
+- (NSRect)boxForToaster:(FlyingToaster *)toaster
+{
+  float s = toaster->scale;
+
+  return NSMakeRect(floor(toaster->position.x - (64.0 * s)) - 2.0,
+		    floor(toaster->position.y - (24.0 * s)) - 2.0,
+		    ceil(128.0 * s) + 4.0, ceil(84.0 * s) + 4.0);
+}
+
+/*
+ * Erase and draw only around the toasters: each one's old and new boxes
+ * together, overlapping ones merged so no toaster is erased under
+ * another, each part locked, drawn and flushed by itself. A frame is a
+ * few small rectangles instead of the whole screen.
+ */
+- (void)stepWithOwnFocus
+{
+  NSRect bounds = [self bounds];
+  NSRect dirty[FlyingToastersCount];
+  int i, j, n = FlyingToastersCount;
+  BOOL merged;
+
+  for(i = 0; i < FlyingToastersCount; i++)
+    {
+      dirty[i] = [self boxForToaster: &toasters[i]];
+    }
+  [self advance];
+  for(i = 0; i < FlyingToastersCount; i++)
+    {
+      dirty[i] = NSIntersectionRect(bounds,
+	NSUnionRect(dirty[i], [self boxForToaster: &toasters[i]]));
+    }
+  do
+    {
+      merged = NO;
+      for(i = 0; i < n; i++)
+	{
+	  for(j = i + 1; j < n; j++)
+	    {
+	      if(NSIntersectsRect(dirty[i], dirty[j]))
+		{
+		  dirty[i] = NSUnionRect(dirty[i], dirty[j]);
+		  dirty[j] = dirty[--n];
+		  merged = YES;
+		  j = i;	/* dirty[i] grew: check it against all again */
+		}
+	    }
+	}
+    }
+  while(merged);
+
+  for(i = 0; i < n; i++)
+    {
+      if(NSIsEmptyRect(dirty[i]))
+	{
+	  continue;
+	}
+      [self lockFocusInRect: dirty[i]];
+      [[NSColor blackColor] set];
+      NSRectFill(dirty[i]);
+      for(j = 0; j < FlyingToastersCount; j++)
+	{
+	  if(NSIntersectsRect(dirty[i], [self boxForToaster: &toasters[j]]))
+	    {
+	      [self drawToaster: &toasters[j]];
+	    }
+	}
+      [self unlockFocus];
+      [[self window] flushWindow];
     }
 }
 

@@ -19,6 +19,11 @@
    puts back the timer. A nil target stops the messages. */
 - (BOOL)setAnimationFrameTarget:(id)target action:(SEL)action;
 - (void) didLockFocus;
+/* Optional, instead of -oneStep: the module steps and draws itself,
+   locking focus on and flushing only the parts that change
+   (-lockFocusInRect:, -unlockFocus, -[NSWindow flushWindow] for each),
+   so a few moving sprites don't cost a whole screen per frame. */
+- (void) stepWithOwnFocus;
 
 // inspector methods...
 - (NSView *) inspector: (id)sender;

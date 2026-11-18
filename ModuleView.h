@@ -24,6 +24,10 @@
    (-lockFocusInRect:, -unlockFocus, -[NSWindow flushWindow] for each),
    so a few moving sprites don't cost a whole screen per frame. */
 - (void) stepWithOwnFocus;
+/* Optional: YES draws the module at 1x on a HiDPI screen and leaves the
+   scaling to the window server, for a module that redraws the whole
+   screen on the CPU every frame and needn't be sharp. */
+- (BOOL) prefersStandardResolution;
 
 // inspector methods...
 - (NSView *) inspector: (id)sender;

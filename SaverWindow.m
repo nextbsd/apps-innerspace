@@ -8,6 +8,30 @@
 #endif
 
 @implementation SaverWindow
+- (id) initWithContentRect: (NSRect)contentRect
+		 styleMask: (NSUInteger)style
+		   backing: (NSBackingStoreType)store
+		     defer: (BOOL)flag
+	standardResolution: (BOOL)standard
+{
+  /* Set before NSWindow's initializer: the backend asks for the scale
+     while it makes the window's backing store. */
+  standardResolution = standard;
+  return [self initWithContentRect: contentRect
+			 styleMask: style
+			   backing: store
+			     defer: flag];
+}
+
+/* At 1x a module drawing the whole screen on the CPU has a quarter of
+   the pixels to draw, and the window server scales the window up (the
+   NextBSD backend gives a window the scale its -backingScaleFactor
+   answers). */
+- (CGFloat) backingScaleFactor
+{
+  return standardResolution ? 1.0 : [super backingScaleFactor];
+}
+
 - (void) setAction: (SEL)a forTarget: (id)t
 {
   action = a;

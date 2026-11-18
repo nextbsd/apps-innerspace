@@ -257,6 +257,21 @@ clang $(gnustep-config --objc-flags) Tests/DirectRenderingTests.m InnerSpaceCont
 /tmp/innerspace-direct-tests
 ```
 
+### Modules at 1x on HiDPI screens
+
+On a HiDPI screen a module's window has a backing pixel per screen pixel,
+so a module that draws the whole screen on the CPU every frame draws four
+times the pixels it did at 1x (3840x2400 on a 2x laptop). A module can
+answer `-prefersStandardResolution` YES (ModuleView.h): its window then
+answers 1 for `-backingScaleFactor`, the NextBSD backend gives it a 1x
+backing store, and WindowServer scales it up. Aquarium does; it also steps
+with `-stepWithOwnFocus`, since its `-display` already flushes the frame.
+
+```sh
+clang $(gnustep-config --objc-flags) Tests/StandardResolutionTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-scale-tests $(gnustep-config --gui-libs) -lX11
+/tmp/innerspace-scale-tests
+```
+
 The menu-bar status item and Dock preference belong to the Cocoa host only;
 GNUstep retains its original application menus, Gorm interface, startup, and
 module-switching behavior. Session mode restoration is Cocoa-only. No Cocoa

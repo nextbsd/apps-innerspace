@@ -19,7 +19,10 @@
   id speedSlider;
 
   // internal vars.
-  SaverWindow *saverWindow;
+  SaverWindow *saverWindow;	// on the main display
+  // the other displays' windows, each with its own instance of the
+  // module as its content view (or none: black)
+  NSMutableArray *otherWindows;
   NSTimer *timer;
   NSTimeInterval requestedAnimationInterval;
   // frames paced by the display (-setAnimationFrameTarget:action:)
@@ -52,6 +55,8 @@
 - (void) destroySaverWindow;
 - (void) screenParametersDidChange: (NSNotification *)notification;
 - (void) createSaverWindow: (BOOL)desktop;
+- (void) createOtherWindows;
+- (void) destroyOtherWindows;
 - (void) startTimer;
 - (void) stopTimer;
 - (void) resetTimer;

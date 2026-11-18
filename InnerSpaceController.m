@@ -9,6 +9,43 @@
 #define TIME 0.10
 #define MINIMUM_ANIMATION_DELAY 0.01
 
+/* The main display's screen: the first of +[NSScreen screens] (the one
+   with the menu bar). +mainScreen is the key window's, which may be on
+   another display. */
+static NSScreen *
+mainDisplay(void)
+{
+  NSArray *screens = [NSScreen screens];
+
+  return [screens count] > 0 ? [screens objectAtIndex: 0]
+    : [NSScreen mainScreen];
+}
+
+/* Draw one frame of a module in its window, as -runAnimation: does. */
+static void
+stepModule(ModuleView *module, NSWindow *window)
+{
+  if ([module respondsToSelector: @selector(renderAnimationFrame)]
+      && [module renderAnimationFrame])
+    {
+      /* It presents its own drawable; one whose last frame isn't on
+	 its display yet skips this one. */
+    }
+  else if ([module respondsToSelector: @selector(stepWithOwnFocus)])
+    {
+      [module stepWithOwnFocus];
+    }
+  else
+    {
+      [module lockFocus];
+      if ([module respondsToSelector: @selector(didLockFocus)])
+	[module didLockFocus];
+      [module oneStep];
+      [module unlockFocus];
+      [window flushWindow];
+    }
+}
+
 @implementation InnerSpaceController
 
 // interface callbacks
@@ -190,7 +227,7 @@
 
 - (void) createSaverWindow: (BOOL)desktop
 {
-  NSRect frame = [[NSScreen mainScreen] frame];
+  NSRect frame = [mainDisplay() frame];
   int store = NSBackingStoreRetained;
   
   [self destroySaverWindow];
@@ -258,6 +295,7 @@
       NS_ENDHANDLER
     }
   
+  [self createOtherWindows];
   [self startTimer];
   if (desktop)
     {
@@ -271,12 +309,166 @@
     }
 }
 
+/*
+ * The other displays (NextBSD's several displays, E40): a window of the
+ * saver window's kind on each, at its level, with an instance of the
+ * current module of its own, so modules with state (Kaleidoscope, Tomorrow
+ * Never Knows, Flying Toasters) run one each, and GL modules get a
+ * context each. They step with the main display's module (-runAnimation:);
+ * a GL module whose last frame isn't on its own display yet skips the
+ * step, so none queues frames for a slower display. With the
+ * moduleOnEveryDisplay default NO, the others are plain black, which
+ * saves the GPU the work on large external displays.
+ */
+- (void) createOtherWindows
+{
+  NSArray *screens = [NSScreen screens];
+  BOOL everywhere = YES;
+  NSUInteger i;
+
+  [self destroyOtherWindows];
+  if (saverWindow == nil || [screens count] < 2)
+    {
+      return;
+    }
+  if ([defaults objectForKey: @"moduleOnEveryDisplay"] != nil)
+    {
+      everywhere = [defaults boolForKey: @"moduleOnEveryDisplay"];
+    }
+  otherWindows = [[NSMutableArray alloc] init];
+  for (i = 1; i < [screens count]; i++)
+    {
+      NSRect frame = [[screens objectAtIndex: i] frame];
+      SaverWindow *other;
+      ModuleView *module = nil;
+
+      other = [[SaverWindow alloc] initWithContentRect: frame
+					      styleMask: NSBorderlessWindowMask
+						backing: [saverWindow backingType]
+						  defer: NO];
+      [other setReleasedWhenClosed: NO];
+      [other setAction: @selector(stopAndStartSaver) forTarget: self];
+      [other setAutodisplay: YES];
+      [other setExcludedFromWindowsMenu: YES];
+      [other setBackgroundColor: [NSColor blackColor]];
+      [other setOneShot: YES];
+      [other setLevel: [saverWindow level]];
+      [other setCanHide: [saverWindow canHide]];
+      if (everywhere && currentModule != nil)
+	{
+	  NS_DURING
+	    module = [[[currentModule class] alloc]
+		       initWithFrame: [[other contentView] bounds]];
+	    [other setContentView: module];
+	    if ([module respondsToSelector: @selector(willEnterScreenSaverMode)])
+	      {
+		[module willEnterScreenSaverMode];
+	      }
+	  NS_HANDLER
+	    NSLog(@"EXCEPTION while creating a saver window for display %@: %@",
+		  NSStringFromRect(frame), localException);
+	  NS_ENDHANDLER
+	  RELEASE(module);
+	}
+      [otherWindows addObject: other];
+      RELEASE(other);
+      if ([saverWindow level] == NSDesktopWindowLevel)
+	{
+	  [other orderBack: self];
+	}
+      else
+	{
+	  [other orderFront: self];
+	}
+    }
+}
+
+- (void) destroyOtherWindows
+{
+  NSEnumerator *e = [otherWindows objectEnumerator];
+  NSWindow *other;
+
+  while ((other = [e nextObject]) != nil)
+    {
+      id module = [other contentView];
+
+      if ([module respondsToSelector: @selector(setAnimationFrameTarget:action:)])
+	{
+	  NS_DURING
+	    [module setAnimationFrameTarget: nil action: NULL];
+	  NS_HANDLER
+	  NS_ENDHANDLER
+	}
+      [other close];
+    }
+  DESTROY(otherWindows);
+}
+
+/* Step the other displays' modules with the main one. */
+- (void) stepOtherWindows
+{
+  NSEnumerator *e = [otherWindows objectEnumerator];
+  NSWindow *other;
+
+  while ((other = [e nextObject]) != nil)
+    {
+      ModuleView *module = [other contentView];
+
+      if (currentModule == nil || ![module isKindOfClass: [currentModule class]])
+	{
+	  continue;	/* black */
+	}
+      NS_DURING
+	stepModule(module, other);
+      NS_HANDLER
+	NSLog(@"EXCEPTION while in running animation: %@", localException);
+      NS_ENDHANDLER
+    }
+}
+
+/* The other displays' windows match the screens after the main one. */
+- (BOOL) otherWindowsMatchScreens
+{
+  NSArray *screens = [NSScreen screens];
+  NSUInteger i, count = [screens count] > 0 ? [screens count] - 1 : 0;
+
+  if ([otherWindows count] != count)
+    {
+      return NO;
+    }
+  for (i = 0; i < count; i++)
+    {
+      if (!NSEqualRects([[otherWindows objectAtIndex: i] frame],
+			[[screens objectAtIndex: i + 1] frame]))
+	{
+	  return NO;
+	}
+    }
+  return YES;
+}
+
 - (void) screenParametersDidChange: (NSNotification *)notification
 {
   /* Use the full frame, not visibleFrame: the Dock draws over the desktop. */
-  NSRect frame = [[NSScreen mainScreen] frame];
+  NSRect frame = [mainDisplay() frame];
 
-  if(saverWindow == nil || NSEqualRects([saverWindow frame], frame))
+  if(saverWindow == nil)
+    {
+      return;
+    }
+
+  /* Displays came, went or moved: a window for each again. */
+  if(![self otherWindowsMatchScreens])
+    {
+      [self createOtherWindows];
+      /* A boring module draws once, when it starts: these start now. */
+      if([currentModule respondsToSelector: @selector(isBoringScreenSaver)])
+	{
+	  [self stepOtherWindows];
+	}
+    }
+
+  if(NSEqualRects([saverWindow frame], frame))
     {
       return;
     }
@@ -294,6 +486,7 @@
 - (void) destroySaverWindow
 {
   [self stopTimer];
+  [self destroyOtherWindows];
   if(saverWindow != nil)
     {
       [saverWindow close];
@@ -392,6 +585,7 @@
             [currentModule unlockFocus];
             [saverWindow flushWindow];
           }
+        [self stepOtherWindows];
       NS_HANDLER
 	NSLog(@"EXCEPTION: %@",localException);
       NS_ENDHANDLER      
@@ -528,6 +722,7 @@
                 [saverWindow flushWindow];
               }
           }
+        [self stepOtherWindows];
         /* GPU activation/fallback can change the preferred cadence. Recreate
            the timer only when that cadence actually changes. */
         if (atimer != nil && requestedAnimationInterval > 0
@@ -638,7 +833,7 @@
 	  theViewClass = [bundle principalClass];
 	  if(theViewClass != nil)
 	    {
-	      newModule = [[theViewClass alloc] initWithFrame: [[NSScreen mainScreen] frame]];
+	      newModule = [[theViewClass alloc] initWithFrame: [mainDisplay() frame]];
 	    }
 	}
     }

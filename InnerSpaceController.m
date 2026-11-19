@@ -192,6 +192,7 @@
 {
   NSRect frame = [[NSScreen mainScreen] frame];
   int store = NSBackingStoreRetained;
+  BOOL standard = NO;
   
   [self destroySaverWindow];
 
@@ -208,12 +209,21 @@
     NSLog(@"EXCEPTION: %@",localException);
     store = NSBackingStoreBuffered;
   NS_ENDHANDLER
+  NS_DURING
+    if([currentModule respondsToSelector: @selector(prefersStandardResolution)])
+      {
+	standard = [currentModule prefersStandardResolution];
+      }
+  NS_HANDLER
+    NSLog(@"EXCEPTION: %@",localException);
+  NS_ENDHANDLER
 
   // create the window...
   saverWindow = [[SaverWindow alloc] initWithContentRect: frame
 				     styleMask: NSBorderlessWindowMask
 				     backing: store
-				     defer: NO];
+				     defer: NO
+			     standardResolution: standard];
   [saverWindow setReleasedWhenClosed: NO];
 
   // set some attributes...

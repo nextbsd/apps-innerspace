@@ -93,6 +93,9 @@ static void Fish(int species, double beat)
 - (BOOL)useBufferedWindow { return YES; }
 - (NSTimeInterval)animationDelayTime { return 1.0/30.0; }
 - (NSString *)windowTitle { return @"Aquarium"; }
+// Every pixel of the tank is drawn again each frame: at 1x on HiDPI
+// screens, which its soft gradients don't need.
+- (BOOL)prefersStandardResolution { return YES; }
 - (void)oneStep
 {
   elapsed += 1.0/30.0;
@@ -102,6 +105,15 @@ static void Fish(int species, double beat)
   [self setNeedsDisplay:YES];
   [self display];
 #endif
+}
+
+// -display draws and flushes the view itself; the host's -oneStep path
+// would lock focus around it and flush the whole screen a second time.
+- (void)stepWithOwnFocus
+{
+  elapsed += 1.0/30.0;
+  [self setNeedsDisplay:YES];
+  [self display];
 }
 
 - (void)drawRect:(NSRect)dirtyRect

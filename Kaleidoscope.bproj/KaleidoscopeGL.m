@@ -27,7 +27,11 @@
    steps; the CPU version's 8-bit fade never takes the last few levels
    away either (pixman rounds 4 * 0.88 back up to 4). */
 #define MAX_AGE 36.0
-/* Steps are kept modulo this, so a float holds them exactly enough. */
+/* Steps are kept modulo this, so a float holds them exactly enough.
+   The shader takes an age below -CLOCK_WRAP / 2 as wrapped, and any
+   other below 0 as 0: the head's age is 0 (its step is now), and
+   mod(0 + 4096, 4096) on the GPU came out just under 4096 on some
+   frames (Iris), which faded the head to black over the newest discs. */
 #define CLOCK_WRAP 4096.0
 
 /* Per vertex: the disc (x, y, radius, hue), then its step, its weight
@@ -70,7 +74,8 @@ static const char *vertexShader =
   "  vec2 q = vec2(c * p.x - s * p.y, s * p.x + c * p.y);\n"
   "  float r = aDisc.z * uPixels;\n"
   "  float extent = r + 0.5 * uPixels + 1.0;\n"
-  "  float age = mod(uNow - aInfo.x + 4096.0, 4096.0);\n"
+  "  float age = uNow - aInfo.x;\n"
+  "  age = age < -2048.0 ? age + 4096.0 : max(age, 0.0);\n"
   "  float fade = exp2(age * -0.184425);\n"	/* 0.88^age */
   "  float fill = 1.0 - pow(0.28, aInfo.y);\n"	/* alpha 0.72 a step */
   "  float stroke = 1.0 - pow(0.55, aInfo.y);\n"	/* alpha 0.45 */

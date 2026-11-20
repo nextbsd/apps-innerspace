@@ -46,6 +46,29 @@ stepModule(ModuleView *module, NSWindow *window)
     }
 }
 
+/* Close a saver window and take its module out of it while the window is
+   whole. A window released with its module still in it tells the module
+   it is leaving (-viewWillMoveToWindow: nil) from -[NSWindow dealloc],
+   at the end of a pass through the run loop, after the window's own
+   frame view has already left the window: a module that changes its
+   views then (Space2View takes its OpenGL view out) has AppKit convert
+   between two windows and raise, and InnerSpace stops with a critical
+   error. Switching modules quickly releases windows that way all the
+   time. Taken out here, the module hears it while the window is whole,
+   and it is released (an other display's) or moved to the next window
+   (the main display's) as any view is. */
+static void
+closeSaverWindow(NSWindow *window)
+{
+  [window close];
+  NS_DURING
+    [window setContentView: nil];
+  NS_HANDLER
+    NSLog(@"EXCEPTION while taking a module out of its window: %@",
+	  localException);
+  NS_ENDHANDLER
+}
+
 @implementation InnerSpaceController
 
 // interface callbacks
@@ -409,7 +432,7 @@ stepModule(ModuleView *module, NSWindow *window)
 	  NS_HANDLER
 	  NS_ENDHANDLER
 	}
-      [other close];
+      closeSaverWindow(other);
     }
   DESTROY(otherWindows);
 }
@@ -499,7 +522,7 @@ stepModule(ModuleView *module, NSWindow *window)
   [self destroyOtherWindows];
   if(saverWindow != nil)
     {
-      [saverWindow close];
+      closeSaverWindow(saverWindow);
       RELEASE(saverWindow);
       saverWindow = nil;
     }

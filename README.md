@@ -272,6 +272,23 @@ clang $(gnustep-config --objc-flags) Tests/StandardResolutionTests.m InnerSpaceC
 /tmp/innerspace-scale-tests
 ```
 
+### Switching modules
+
+Switching modules closes the saver windows and takes the module out of each
+before it is released, so a module hears `-viewWillMoveToWindow: nil` while
+its window is whole, not from `-[NSWindow dealloc]` at the end of a pass
+through the run loop, when AppKit can't convert between the window's views
+any more. The regression test rotates through every built module, down and up
+the list and to Space2View and back, with the dwell between switches of quick
+clicks and of a GPU module that has started drawing. It needs the session's
+display server and OpenGL:
+
+```sh
+gmake
+clang $(gnustep-config --objc-flags) Tests/ModuleRotationTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-rotation-tests $(gnustep-config --gui-libs) -lX11
+/tmp/innerspace-rotation-tests InnerSpace.app/Resources 3
+```
+
 The menu-bar status item and Dock preference belong to the Cocoa host only;
 GNUstep retains its original application menus, Gorm interface, startup, and
 module-switching behavior. Session mode restoration is Cocoa-only. No Cocoa

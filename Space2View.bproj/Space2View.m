@@ -226,10 +226,17 @@ float randBetween(float lower, float upper)
   [gpuStatusLabel setStringValue: gpuStatus];
 }
 
+/* Without marking this view for display: this is also called from
+   -viewWillMoveToWindow:, and when a window is deallocated with this
+   view still in it, its frame view has already left the window by then,
+   so marking would have AppKit convert between two windows and raise
+   (an assertion in -[NSView convertRect:fromView:]). The OpenGL view
+   covers the whole view, and the CPU renderer redraws everything after
+   it (backgroundChanged). */
 - (void)stopGPU
 {
   [glRenderer invalidateRenderer];
-  [glRenderer removeFromSuperview];
+  [glRenderer removeFromSuperviewWithoutNeedingDisplay];
   DESTROY(glRenderer);
   gpuDrawing = NO;
   backgroundChanged = YES;

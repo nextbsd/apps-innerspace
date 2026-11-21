@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 StepMan_OBJC_FILES = StepManView.m
 StepMan_PRINCIPAL_CLASS = StepManView
-StepMan_STANDARD_INSTALL = no
+StepMan_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 StepMan_RESOURCE_FILES = GNUstep.tiff
 
 -include GNUmakefile.preamble

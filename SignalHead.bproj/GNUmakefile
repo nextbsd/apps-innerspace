@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 SignalHead_OBJC_FILES = SignalHeadView.m
 SignalHead_PRINCIPAL_CLASS = SignalHeadView
-SignalHead_STANDARD_INSTALL = no
+SignalHead_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

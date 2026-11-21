@@ -41,7 +41,7 @@ Polyhedra_PRINCIPAL_CLASS = PolyhedraView
 
 # The Resource files to be copied into the bundle's resources directory
 Polyhedra_RESOURCE_FILES = Polyhedra.gorm
-Polyhedra_STANDARD_INSTALL=no
+Polyhedra_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

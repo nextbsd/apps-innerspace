@@ -32,7 +32,7 @@ BUNDLE_EXTENSION = .InnerSpace
 # The Objective-C source files to be compiled
 Black_OBJC_FILES = BlackView.m
 Black_PRINCIPAL_CLASS = BlackView
-Black_STANDARD_INSTALL = no
+Black_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 # The Resource files to be copied into the bundle's resources directory
 # Black_RESOURCE_FILES = English.lproj/Black.gmodel

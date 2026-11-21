@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 DictionaryWords_OBJC_FILES = DictionaryWordsView.m
 DictionaryWords_PRINCIPAL_CLASS = DictionaryWordsView
-DictionaryWords_STANDARD_INSTALL = no
+DictionaryWords_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

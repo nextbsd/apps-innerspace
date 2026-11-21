@@ -16,7 +16,7 @@ Kaleidoscope_BUNDLE_LIBS += -framework OpenGL
 else
 Kaleidoscope_BUNDLE_LIBS += -lGL
 endif
-Kaleidoscope_STANDARD_INSTALL = no
+Kaleidoscope_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

@@ -39,7 +39,7 @@ Qix_OBJC_FILES = QixView.m
 Qix_PRINCIPAL_CLASS = QixView
 
 # The Resource files to be copied into the bundle's resources directory
-Qix_STANDARD_INSTALL=no
+Qix_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

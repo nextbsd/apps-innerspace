@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 BouncyClock_OBJC_FILES = BouncyClockView.m
 BouncyClock_PRINCIPAL_CLASS = BouncyClockView
-BouncyClock_STANDARD_INSTALL = no
+BouncyClock_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

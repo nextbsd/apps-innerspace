@@ -3,6 +3,11 @@
 InnerSpace brings BackSpace-era animations to your desktop, with an animated
 background and a manually started full-screen saver.
 
+On NextBSD (GNUstep) this repository builds only the modules. Workspace draws
+the desktop background (apps-workspace, `Background/`): choose a module in
+Workspace Preferences > Background. There is no InnerSpace application to
+install.
+
 ## macOS
 
 Requires macOS 11 or later and Xcode Command Line Tools (`xcode-select --install`)
@@ -210,14 +215,14 @@ Additional macOS-built `.InnerSpace` bundles can be placed in
 
 ## GNUstep
 
-The original GNUstep build and interface files are retained. On GNUstep systems,
-run `make` with gnustep-make configured. Modules are bundled with the application;
-additional built modules can be copied to `$HOME/GNUstep/Library/InnerSpace`.
-On macOS with a GNUstep toolchain, explicitly select that build with:
-
-```sh
-make INNERSPACE_PLATFORM=gnustep
-```
+On GNUstep systems, run `make` with gnustep-make configured, then
+`make install`. Each module is a `.InnerSpace` bundle installed in the
+Library's InnerSpace folder (`$(GNUSTEP_LIBRARY)/InnerSpace`: with
+`GNUSTEP_INSTALLATION_DOMAIN=USER`, `~/Library/InnerSpace`). Workspace's
+desktop background looks in every Library's InnerSpace folder, the user's
+first. The host that runs the modules (the former InnerSpace controller and
+saver window, with its regression tests) is in apps-workspace's
+`Background/`.
 
 ### Kaleidoscope on the GPU
 
@@ -250,12 +255,8 @@ host then draws a frame each time instead of on its timer, which only stays
 as a one-second watchdog, and goes back to the timer if the module falls back
 to the CPU. With nothing on screen being redrawn, no frames are drawn.
 
-The regression test for the host's side (no display needed):
-
-```sh
-clang $(gnustep-config --objc-flags) Tests/DirectRenderingTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-direct-tests $(gnustep-config --gui-libs) -lX11
-/tmp/innerspace-direct-tests
-```
+The regression test for the host's side is apps-workspace's
+`Background/Tests/DirectRenderingTests.m`.
 
 ### Modules at 1x on HiDPI screens
 
@@ -267,10 +268,7 @@ answers 1 for `-backingScaleFactor`, the NextBSD backend gives it a 1x
 backing store, and WindowServer scales it up. Aquarium does; it also steps
 with `-stepWithOwnFocus`, since its `-display` already flushes the frame.
 
-```sh
-clang $(gnustep-config --objc-flags) Tests/StandardResolutionTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-scale-tests $(gnustep-config --gui-libs) -lX11
-/tmp/innerspace-scale-tests
-```
+The host's test is apps-workspace's `Background/Tests/StandardResolutionTests.m`.
 
 ### Switching modules
 
@@ -280,21 +278,9 @@ its window is whole, not from `-[NSWindow dealloc]` at the end of a pass
 through the run loop, when AppKit can't convert between the window's views
 any more. The regression test rotates through every built module, down and up
 the list and to Space2View and back, with the dwell between switches of quick
-clicks and of a GPU module that has started drawing. It needs the session's
-display server and OpenGL:
-
-```sh
-gmake
-clang $(gnustep-config --objc-flags) Tests/ModuleRotationTests.m InnerSpaceController.m SaverWindow.m UtilFunctions.c -o /tmp/innerspace-rotation-tests $(gnustep-config --gui-libs) -lX11
-/tmp/innerspace-rotation-tests InnerSpace.app/Resources 3
-```
-
-The menu-bar status item and Dock preference belong to the Cocoa host only;
-GNUstep retains its original application menus, Gorm interface, startup, and
-module-switching behavior. Session mode restoration is Cocoa-only. No Cocoa
-status-item or activation-policy API is compiled by the GNUstep target. A full
-GNUstep compile has not been verified in this macOS environment because the
-GNUstep toolchain is not installed.
+clicks and of a GPU module that has started drawing. It is apps-workspace's
+`Background/Tests/ModuleRotationTests.m`; it needs the session's display
+server, OpenGL and the installed modules.
 
 ## Notice
 

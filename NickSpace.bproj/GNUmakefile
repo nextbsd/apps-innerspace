@@ -37,7 +37,7 @@ BUNDLE_EXTENSION = .InnerSpace
 # The Objective-C source files to be compiled
 NickSpace_OBJC_FILES = NickSpaceView.m
 NickSpace_PRINCIPAL_CLASS = NickSpaceView
-NickSpace_STANDARD_INSTALL = no
+NickSpace_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 # The Resource files to be copied into the bundle's resources directory
 NickSpace_RESOURCE_FILES = English.lproj/NickSpace.gorm

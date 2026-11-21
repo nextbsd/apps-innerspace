@@ -39,7 +39,7 @@ ItJustStopped_OBJC_FILES = ItJustStoppedViewPart.m
 ItJustStopped_PRINCIPAL_CLASS = ItJustStoppedView
 
 # The Resource files to be copied into the bundle's resources directory
-ItJustStopped_STANDARD_INSTALL=no
+ItJustStopped_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

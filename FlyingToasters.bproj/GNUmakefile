@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 FlyingToasters_OBJC_FILES = FlyingToastersView.m
 FlyingToasters_PRINCIPAL_CLASS = FlyingToastersView
-FlyingToasters_STANDARD_INSTALL = no
+FlyingToasters_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

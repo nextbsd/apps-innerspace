@@ -7,7 +7,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 SystemStats_OBJC_FILES = SystemStatsView.m
 SystemStats_PRINCIPAL_CLASS = SystemStatsView
-SystemStats_STANDARD_INSTALL = no
+SystemStats_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

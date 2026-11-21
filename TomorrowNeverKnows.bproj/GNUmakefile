@@ -14,7 +14,7 @@ TomorrowNeverKnows_BUNDLE_LIBS += -framework OpenGL
 else
 TomorrowNeverKnows_BUNDLE_LIBS += -lGL
 endif
-TomorrowNeverKnows_STANDARD_INSTALL = no
+TomorrowNeverKnows_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

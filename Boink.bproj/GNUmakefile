@@ -11,7 +11,7 @@ BUNDLE_EXTENSION = .InnerSpace
 
 Boink_OBJC_FILES = BoinkView.m
 Boink_PRINCIPAL_CLASS = BoinkView
-Boink_STANDARD_INSTALL = no
+Boink_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 -include GNUmakefile.preamble
 

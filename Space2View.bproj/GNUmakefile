@@ -26,14 +26,13 @@
 #  If not, write to the Free Software Foundation,
 #  59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-GNUSTEP_INSTALLATION_DOMAIN = LOCAL
 
 include $(GNUSTEP_MAKEFILES)/common.make
 
 # The application to be compiled
 BUNDLE_NAME = Space2View
 BUNDLE_EXTENSION = .InnerSpace
-Space2View_STANDARD_INSTALL = no
+Space2View_INSTALL_DIR = $(GNUSTEP_LIBRARY)/InnerSpace
 
 # The Objective-C source files to be compiled
 Space2View_OBJC_FILES = Space2View.m Space2GLView.m

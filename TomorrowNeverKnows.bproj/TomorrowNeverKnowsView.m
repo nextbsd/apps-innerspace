@@ -71,6 +71,66 @@ compile(GLenum type, const char *source, BOOL es)
   return shader;
 }
 
+/*
+ * Without OpenGL (a backend with no GL pixel format, as NextBSD's is in a
+ * VM, or a software renderer): the same pattern worked out on the CPU,
+ * the fragment shader above in C, at an eighth of the screen's size and
+ * drawn scaled up, which keeps it smooth and cheap. It used to show a
+ * still violet instead, which looked like a fault.
+ */
+#define CPU_SCALE	8
+
+static double
+fract_mod(double x, double y)
+{
+  return x - y * floor(x / y);
+}
+
+static double
+smooth(double e0, double e1, double x)
+{
+  double t = (x - e0) / (e1 - e0);
+
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
+  return t * t * (3 - 2 * t);
+}
+
+static void
+cpuPattern(unsigned char *rgb, int w, int h, size_t rowBytes, double t,
+           double aspect)
+{
+  double breath = 1.5 * sin(t * 0.25), drift = sin(t * 0.05);
+  double phase[3] = { 0.00 + 0.10 * drift, 0.33 + 0.20 * drift,
+                      0.67 + 0.30 * drift };
+  int x, y, i;
+
+  for (y = 0; y < h; y++)
+    {
+      unsigned char *p = rgb + (size_t)y * rowBytes;
+      /* rows run top to bottom; the shader's v runs bottom to top */
+      double qy = ((h - 1 - y) + 0.5) / h - 0.5;
+
+      for (x = 0; x < w; x++, p += 3)
+        {
+          double qx = ((x + 0.5) / w - 0.5) * aspect;
+          double r = sqrt(qx * qx + qy * qy);
+          double a = fabs(fract_mod(atan2(qy, qx) + t * 0.2, 1.0472) - 0.5236);
+          double kx = cos(a) * r * (5.0 + breath);
+          double ky = sin(a) * r * (5.0 + breath);
+          double swirl = sin(kx * 1.7 + t) * cos(ky * 1.3 - t * 0.7);
+          double v = r * 0.6 + swirl * 0.25 + t * 0.03;
+          double shade = (0.75 + 0.25 * cos(t + kx * 3.0 + ky * 2.0))
+                         * smooth(1.25, 0.0, r);
+
+          for (i = 0; i < 3; i++)
+            {
+              double c = (0.5 + 0.5 * cos(6.28318 * (v + phase[i]))) * shade;
+              p[i] = (unsigned char)(c <= 0 ? 0 : c >= 1 ? 255 : c * 255.0 + 0.5);
+            }
+        }
+    }
+}
+
 @implementation TomorrowNeverKnowsView
 
 - (id)initWithFrame:(NSRect)frameRect
@@ -83,6 +143,7 @@ compile(GLenum type, const char *source, BOOL es)
 
 - (void)dealloc
 {
+  RELEASE(cpuFrame);
   [self stopOpenGL];
   [super dealloc];
 }
@@ -279,16 +340,50 @@ compile(GLenum type, const char *source, BOOL es)
     [frameTarget performSelector: frameAction withObject: self];
 }
 
-/* Without OpenGL: a still, deep violet, once. */
-- (void)drawRect:(NSRect)rect
+/* One frame of the pattern on the CPU, drawn over the whole view. */
+- (void)drawCPUFrame
 {
-  [[NSColor colorWithCalibratedRed: 0.18 green: 0.05 blue: 0.28 alpha: 1]
-    set];
-  NSRectFill(rect);
+  NSRect bounds = [self bounds];
+  int w = (int)ceil(NSWidth(bounds) / CPU_SCALE);
+  int h = (int)ceil(NSHeight(bounds) / CPU_SCALE);
+
+  if (w < 2 || h < 2)
+    return;
+  if (cpuFrame == nil || [cpuFrame pixelsWide] != w || [cpuFrame pixelsHigh] != h)
+    {
+      RELEASE(cpuFrame);
+      cpuFrame = [[NSBitmapImageRep alloc]
+        initWithBitmapDataPlanes: NULL
+                      pixelsWide: w
+                      pixelsHigh: h
+                   bitsPerSample: 8
+                 samplesPerPixel: 3
+                        hasAlpha: NO
+                        isPlanar: NO
+                  colorSpaceName: NSDeviceRGBColorSpace
+                     bytesPerRow: 0
+                    bitsPerPixel: 24];
+    }
+  cpuPattern([cpuFrame bitmapData], w, h, [cpuFrame bytesPerRow],
+             fmod([NSDate timeIntervalSinceReferenceDate] - start, 3600.0),
+             NSWidth(bounds) / NSHeight(bounds));
+  [[NSGraphicsContext currentContext]
+    setImageInterpolation: NSImageInterpolationHigh];
+  [cpuFrame drawInRect: bounds];
 }
 
+/* Without OpenGL: the pattern from the CPU. */
+- (void)drawRect:(NSRect)rect
+{
+  [self drawCPUFrame];
+}
+
+/* InnerSpace calls this, with focus locked, for each frame that
+   -renderAnimationFrame didn't draw with OpenGL. */
 - (void)oneStep
 {
+  if (context == nil)
+    [self drawCPUFrame];
 }
 
 @end

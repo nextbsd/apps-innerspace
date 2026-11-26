@@ -22,6 +22,7 @@
   NSTimeInterval start;
   id frameTarget;
   SEL frameAction;
+  NSBitmapImageRep *cpuFrame;	/* without OpenGL: the pattern, small */
 }
 @end
 

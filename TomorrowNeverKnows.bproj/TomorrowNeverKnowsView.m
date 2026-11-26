@@ -372,9 +372,17 @@ cpuPattern(unsigned char *rgb, int w, int h, size_t rowBytes, double t,
   [cpuFrame drawInRect: bounds];
 }
 
-/* Without OpenGL: the pattern from the CPU. */
+/* With OpenGL the frames cover this; without it, the pattern from the
+   CPU. */
 - (void)drawRect:(NSRect)rect
 {
+  if (context != nil)
+    {
+      [[NSColor colorWithCalibratedRed: 0.18 green: 0.05 blue: 0.28 alpha: 1]
+        set];
+      NSRectFill(rect);
+      return;
+    }
   [self drawCPUFrame];
 }
 

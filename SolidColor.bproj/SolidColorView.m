@@ -139,9 +139,9 @@ SCIsLight(void)
                   fallback:(NSUInteger)fallback
 {
   NSTextField *text = AUTORELEASE([[NSTextField alloc]
-                        initWithFrame: NSMakeRect(0, y + 3, 70, 20)]);
+                        initWithFrame: NSMakeRect(20, y + 3, 70, 20)]);
   NSPopUpButton *popUp = [[NSPopUpButton alloc]
-                           initWithFrame: NSMakeRect(76, y, 170, 26) pullsDown: NO];
+                           initWithFrame: NSMakeRect(96, y, 200, 26) pullsDown: NO];
   NSUInteger i;
 
   [text setStringValue: label];
@@ -166,9 +166,11 @@ SCIsLight(void)
 {
   if (inspectorView == nil)
     {
-      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 250, 70)];
-      darkPopUp = [self popUpAt: 38 label: @"In Dark:" key: SCDarkKey fallback: 0];
-      lightPopUp = [self popUpAt: 4 label: @"In Light:" key: SCLightKey fallback: 6];
+      /* As tall as the Options panel's box, the controls at its top:
+         a shorter view sits at the bottom of the box. */
+      inspectorView = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, 380, 250)];
+      darkPopUp = [self popUpAt: 214 label: @"In Dark:" key: SCDarkKey fallback: 0];
+      lightPopUp = [self popUpAt: 180 label: @"In Light:" key: SCLightKey fallback: 6];
     }
   return inspectorView;
 }

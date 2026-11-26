@@ -31,7 +31,7 @@ PACKAGE_NAME=InnerSpace
 # Subprojects
 #
 
-SUBPROJECTS = Weather.bproj Aquarium.bproj ConnectionMachine.bproj Black.bproj SolidColor.bproj Boxes.bproj SystemStats.bproj \
+SUBPROJECTS = Weather.bproj Aquarium.bproj ConnectionMachine.bproj Black.bproj Boxes.bproj SystemStats.bproj \
 	Boink.bproj \
 	HAL9000.bproj \
 	DictionaryWords.bproj \
